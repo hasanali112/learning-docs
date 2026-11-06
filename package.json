@@ -1,0 +1,15 @@
+{
+  "name": "learning-docs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "আমার শেখার নোট: Python, FastAPI, System Design আর আরো অনেক কিছু",
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev docs",
+    "build": "vitepress build docs",
+    "preview": "vitepress preview docs"
+  },
+  "devDependencies": {
+    "vitepress": "1.6.4"
+  }
+}

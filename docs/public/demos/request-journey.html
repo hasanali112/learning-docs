@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FastAPI Request যাত্রা</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@500;650;750&family=Hind+Siliguri:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one layered flowchart (client → kernel → process → VM → kernel → hardware) on the left, sticky narration on the right */
+:root {
+  --bg: #F3F5F8;
+  --surface: #FFFFFF;
+  --fg: #16202A;
+  --muted: #5B6773;
+  --line: #C9D1DB;
+  --code-bg: #EBEFF4;
+  --client: #3D4A57;
+  --os: #1F7590;
+  --uv: #B0690C;
+  --st: #4655C9;
+  --py: #B5325D;
+  --code: #0B7A5E;
+  --vm: #7445C0;
+  --hw: #6A7A1F;
+  --err: #C93434;
+  --display: "Anek Bangla", "Noto Sans Bengali", system-ui, sans-serif;
+  --body: "Hind Siliguri", "Noto Sans Bengali", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F151B; --surface: #17202A; --fg: #E6ECF2; --muted: #9AA7B4; --line: #354253;
+    --code-bg: #101920; --client: #B8C3CE; --os: #5CC6E4; --uv: #F0A445; --st: #929DFF;
+    --py: #F27FA4; --code: #42D3A8; --vm: #BE9DFF; --hw: #C9DA6E; --err: #FF6E6E; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F151B; --surface: #17202A; --fg: #E6ECF2; --muted: #9AA7B4; --line: #354253;
+  --code-bg: #101920; --client: #B8C3CE; --os: #5CC6E4; --uv: #F0A445; --st: #929DFF;
+  --py: #F27FA4; --code: #42D3A8; --vm: #BE9DFF; --hw: #C9DA6E; --err: #FF6E6E; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.6; }
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-block: 32px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+header { display: flex; flex-direction: column; gap: 6px; max-width: 74ch; }
+h1 { font-family: var(--display); font-weight: 750; font-size: clamp(28px, 4.4vw, 42px); line-height: 1.15; margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); }
+h2 { font-family: var(--display); font-weight: 650; font-size: 22px; margin: 0; text-wrap: balance; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.diagram { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; overflow-x: auto; min-width: 0; }
+.diagram svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+/* bands (layers) */
+.band { fill: color-mix(in srgb, var(--c) 4%, transparent); stroke: color-mix(in srgb, var(--c) 30%, transparent); stroke-width: 1; transition: fill .4s; }
+.band.on { fill: color-mix(in srgb, var(--c) 11%, transparent); stroke: color-mix(in srgb, var(--c) 60%, transparent); }
+.band-l { font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: .04em; fill: var(--c); }
+.c-client { --c: var(--client); } .c-os { --c: var(--os); } .c-proc { --c: var(--code); }
+.c-vm { --c: var(--vm); } .c-hw { --c: var(--hw); }
+
+/* nodes */
+.node { --c: var(--client); }
+.node.os { --c: var(--os); } .node.uv { --c: var(--uv); } .node.st { --c: var(--st); }
+.node.py { --c: var(--py); } .node.code { --c: var(--code); } .node.vm { --c: var(--vm); } .node.hw { --c: var(--hw); }
+.n-shape { fill: var(--surface); stroke: var(--c); stroke-width: 1.8; transition: stroke-width .3s, fill .3s; }
+.n-title { font-family: var(--display); font-weight: 650; font-size: 16px; fill: var(--c); }
+.n-sub { font-family: var(--body); font-size: 12.5px; fill: var(--muted); }
+.node.touch .n-shape { stroke-width: 3; stroke-dasharray: 5 4; }
+.node.active .n-shape { stroke-width: 4; fill: color-mix(in srgb, var(--c) 14%, var(--surface)); }
+
+/* edges */
+.edge { fill: none; stroke: var(--line); stroke-width: 2; transition: stroke .3s; }
+.edge.t-a { stroke: var(--vm); stroke-width: 2.8; }
+.edge.t-req { stroke: var(--fg); stroke-width: 2.8; }
+.edge.t-ok { stroke: var(--code); stroke-width: 2.8; }
+.ah-base { fill: var(--line); } .ah-a { fill: var(--vm); } .ah-req { fill: var(--fg); } .ah-ok { fill: var(--code); }
+
+/* moving dot */
+.dot-c { fill: var(--fg); stroke: var(--surface); stroke-width: 3; }
+.dot-pill { fill: var(--fg); }
+.dot.a .dot-c, .dot.a .dot-pill { fill: var(--vm); }
+.dot.ok .dot-c, .dot.ok .dot-pill { fill: var(--code); }
+.dot-t { font-family: var(--mono); font-size: 12.5px; font-weight: 500; fill: var(--bg); }
+
+/* narration */
+.panel {
+  position: sticky;
+  top: calc(env(safe-area-inset-top, 0px) + 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 20px;
+  min-width: 0;
+}
+.phase { align-self: flex-start; font: 500 12.5px var(--body); padding: 2px 10px; border-radius: 999px; border: 1px solid currentColor; }
+.phase.a { color: var(--vm); } .phase.b { color: var(--code); }
+.stepno { font: 500 12px var(--mono); letter-spacing: .06em; color: var(--muted); }
+.layer { font: 500 12px var(--mono); color: var(--muted); }
+.panel h3 { font-family: var(--display); font-weight: 650; font-size: 22px; line-height: 1.25; margin: 0; text-wrap: balance; }
+.panel p { margin: 0; }
+pre { margin: 0; background: var(--code-bg); border-radius: 10px; padding: 12px 14px; font: 400 13px/1.65 var(--mono); overflow-x: auto; min-width: 0; white-space: pre; }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ctl { font: 500 14px var(--body); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 14px; cursor: pointer; }
+.ctl.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); min-width: 88px; }
+.ctl:focus-visible { outline: 2px solid var(--st); outline-offset: 2px; }
+.progress { width: 100%; height: 6px; border-radius: 3px; background: var(--code-bg); overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--fg); transition: width .4s; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
+
+/* reference */
+.layers { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.layers li { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.layers b { font-family: var(--display); font-weight: 650; font-size: 17px; color: var(--c); }
+.layers span { color: var(--muted); font-size: 15px; }
+.sec { display: flex; flex-direction: column; gap: 14px; border-top: 1px solid var(--line); padding-top: 28px; }
+.notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.note h3 { font-family: var(--display); font-weight: 650; font-size: 18px; margin: 0; text-wrap: balance; }
+.note p { margin: 0; color: var(--muted); }
+
+@media (max-width: 960px) {
+  .main, .notes { grid-template-columns: minmax(0, 1fr); }
+  .layers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .panel { position: static; order: -1; }
+}
+@media (max-width: 560px) { .layers { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) {
+  .band, .n-shape, .edge, .progress span { transition: none; }
+}
+</style>
+<style>body{margin:0}.embed header{display:none}.embed .wrap{padding-block:16px 32px}</style>
+<script>if(new URLSearchParams(location.search).has('embed'))document.documentElement.classList.add('embed')</script>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <h1>একটা request এর পুরো যাত্রা</h1>
+    <p class="lede">Rust backend থেকে request আসে, Linux kernel পার হয়ে Python process এ ঢোকে। CPython VM তোমার কোডের bytecode চালায়, memory আসে kernel থেকে, আর শেষে সব কাজ করে RAM আর CPU। প্রথমে দেখো server চালুর সময় একবার কী হয়, তারপর প্রতিটা request এ কী হয়।</p>
+  </header>
+
+  <div class="main">
+    <div class="diagram">
+      <svg viewBox="0 0 840 836" role="img" aria-labelledby="svgTitle">
+        <title id="svgTitle">ছয় স্তরের flowchart: client, Linux kernel network, Python process, CPython VM, Linux kernel memory, hardware</title>
+        <defs>
+          <marker id="ah-base" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-base" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="ah-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-a" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="ah-req" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-req" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="ah-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-ok" d="M0 0 L10 5 L0 10 z"/></marker>
+        </defs>
+
+        <!-- layers -->
+        <g class="c-client"><rect class="band" id="b1" x="20" y="16" width="800" height="84" rx="12"/><text class="band-l" x="34" y="36">বাইরে · client</text></g>
+        <g class="c-os"><rect class="band" id="b2" x="20" y="116" width="800" height="108" rx="12"/><text class="band-l" x="34" y="136">Linux kernel · network</text></g>
+        <g class="c-proc"><rect class="band" id="b3" x="20" y="240" width="800" height="122" rx="12"/><text class="band-l" x="34" y="260">Python process · তোমার app</text></g>
+        <g class="c-vm"><rect class="band" id="b4" x="20" y="378" width="800" height="182" rx="12"/><text class="band-l" x="34" y="398">CPython · VM আর memory</text></g>
+        <g class="c-os"><rect class="band" id="b5" x="20" y="576" width="800" height="108" rx="12"/><text class="band-l" x="34" y="596">Linux kernel · process আর memory</text></g>
+        <g class="c-hw"><rect class="band" id="b6" x="20" y="700" width="800" height="120" rx="12"/><text class="band-l" x="34" y="720">Hardware</text></g>
+
+        <!-- edges -->
+        <path class="edge" id="e_ex_src" d="M150 610 V456"/>
+        <path class="edge" id="e_src_ast" d="M225 430 H255"/>
+        <path class="edge" id="e_ast_bc" d="M405 430 H435"/>
+        <path class="edge" id="e_bc_uv" d="M470 404 V370 H150 V334"/>
+        <path class="edge" id="e_uv_sock" d="M170 282 V235 H700 V202"/>
+        <path class="edge" id="e_r_nic" d="M360 92 V108 H170 V150"/>
+        <path class="edge" id="e_nic_tcp" d="M255 170 H355"/>
+        <path class="edge" id="e_tcp_sock" d="M505 170 H605"/>
+        <path class="edge" id="e_sock_uv" d="M660 202 V229 H130 V282"/>
+        <path class="edge" id="e_uv_st" d="M225 301 H255"/>
+        <path class="edge" id="e_st_py" d="M405 308 H435"/>
+        <path class="edge" id="e_py_code" d="M585 308 H615"/>
+        <path class="edge" id="e_code_eval" d="M690 334 V404"/>
+        <path class="edge" id="e_eval_pym" d="M690 456 V486"/>
+        <path class="edge" id="e_pym_sys" d="M690 538 V568 H510 V610"/>
+        <path class="edge" id="e_sys_page" d="M585 636 H615"/>
+        <path class="edge" id="e_page_ram" d="M690 662 V692 H330 V738"/>
+        <path class="edge" id="e_ram_cache" d="M405 764 H435"/>
+        <path class="edge" id="e_cache_cpu" d="M585 764 H615"/>
+        <path class="edge" id="e_cpu_code" d="M765 764 H800 V308 H765"/>
+        <path class="edge" id="e_code_st" d="M690 282 V268 H330 V282"/>
+        <path class="edge" id="e_st_uv" d="M255 316 H225"/>
+        <path class="edge" id="e_sock_tcp" d="M605 186 H505"/>
+        <path class="edge" id="e_tcp_nic" d="M355 186 H255"/>
+        <path class="edge" id="e_nic_r" d="M190 150 V114 H400 V92"/>
+
+        <!-- nodes -->
+        <g class="node" id="R" data-band="b1"><rect class="n-shape" x="320" y="36" width="220" height="56" rx="28"/>
+          <text class="n-title" x="430" y="61" text-anchor="middle">Rust backend</text><text class="n-sub" x="430" y="80" text-anchor="middle">HTTP request পাঠায়</text></g>
+
+        <g class="node os" id="NIC" data-band="b2"><rect class="n-shape" x="105" y="150" width="150" height="52" rx="9"/>
+          <text class="n-title" x="180" y="173" text-anchor="middle">NIC</text><text class="n-sub" x="180" y="192" text-anchor="middle">network card</text></g>
+        <g class="node os" id="TCP" data-band="b2"><rect class="n-shape" x="355" y="150" width="150" height="52" rx="9"/>
+          <text class="n-title" x="430" y="173" text-anchor="middle">TCP/IP stack</text><text class="n-sub" x="430" y="192" text-anchor="middle">packet জোড়া লাগায়</text></g>
+        <g class="node os" id="SOCK" data-band="b2"><rect class="n-shape" x="605" y="150" width="150" height="52" rx="9"/>
+          <text class="n-title" x="680" y="173" text-anchor="middle">socket :8000</text><text class="n-sub" x="680" y="192" text-anchor="middle">data জমা রাখে</text></g>
+
+        <g class="node uv" id="UV" data-band="b3"><rect class="n-shape" x="75" y="282" width="150" height="52" rx="9"/>
+          <text class="n-title" x="150" y="305" text-anchor="middle">uvicorn</text><text class="n-sub" x="150" y="324" text-anchor="middle">event loop</text></g>
+        <g class="node st" id="ST" data-band="b3"><rect class="n-shape" x="255" y="282" width="150" height="52" rx="9"/>
+          <text class="n-title" x="330" y="305" text-anchor="middle">Starlette</text><text class="n-sub" x="330" y="324" text-anchor="middle">route · response</text></g>
+        <g class="node py" id="PY" data-band="b3"><rect class="n-shape" x="435" y="282" width="150" height="52" rx="9"/>
+          <text class="n-title" x="510" y="305" text-anchor="middle">Pydantic</text><text class="n-sub" x="510" y="324" text-anchor="middle">data যাচাই</text></g>
+        <g class="node code" id="CODE" data-band="b3"><rect class="n-shape" x="615" y="282" width="150" height="52" rx="9"/>
+          <text class="n-title" x="690" y="305" text-anchor="middle">তোমার কোড</text><text class="n-sub" x="690" y="324" text-anchor="middle">create_order()</text></g>
+
+        <g class="node vm" id="SRC" data-band="b4"><rect class="n-shape" x="75" y="404" width="150" height="52" rx="9"/>
+          <text class="n-title" x="150" y="427" text-anchor="middle">main.py</text><text class="n-sub" x="150" y="446" text-anchor="middle">source code</text></g>
+        <g class="node vm" id="AST" data-band="b4"><rect class="n-shape" x="255" y="404" width="150" height="52" rx="9"/>
+          <text class="n-title" x="330" y="427" text-anchor="middle">tokens → AST</text><text class="n-sub" x="330" y="446" text-anchor="middle">গঠন বোঝা</text></g>
+        <g class="node vm" id="BC" data-band="b4"><rect class="n-shape" x="435" y="404" width="150" height="52" rx="9"/>
+          <text class="n-title" x="510" y="427" text-anchor="middle">bytecode</text><text class="n-sub" x="510" y="446" text-anchor="middle">.pyc ফাইল</text></g>
+        <g class="node vm" id="EVAL" data-band="b4"><rect class="n-shape" x="615" y="404" width="150" height="52" rx="9"/>
+          <text class="n-title" x="690" y="427" text-anchor="middle">eval loop</text><text class="n-sub" x="690" y="446" text-anchor="middle">instruction চালায়</text></g>
+        <g class="node py" id="PYM" data-band="b4"><rect class="n-shape" x="615" y="486" width="150" height="52" rx="9"/>
+          <text class="n-title" x="690" y="509" text-anchor="middle">pymalloc</text><text class="n-sub" x="690" y="528" text-anchor="middle">ছোট memory block</text></g>
+
+        <g class="node os" id="EXEC" data-band="b5"><rect class="n-shape" x="75" y="610" width="150" height="52" rx="9"/>
+          <text class="n-title" x="150" y="633" text-anchor="middle">process তৈরি</text><text class="n-sub" x="150" y="652" text-anchor="middle">fork + exec</text></g>
+        <g class="node os" id="SYS" data-band="b5"><rect class="n-shape" x="435" y="610" width="150" height="52" rx="9"/>
+          <text class="n-title" x="510" y="633" text-anchor="middle">system call</text><text class="n-sub" x="510" y="652" text-anchor="middle">mmap</text></g>
+        <g class="node os" id="PAGE" data-band="b5"><rect class="n-shape" x="615" y="610" width="150" height="52" rx="9"/>
+          <text class="n-title" x="690" y="633" text-anchor="middle">page table</text><text class="n-sub" x="690" y="652" text-anchor="middle">virtual → physical</text></g>
+
+        <g class="node hw" id="RAM" data-band="b6"><rect class="n-shape" x="255" y="738" width="150" height="52" rx="9"/>
+          <text class="n-title" x="330" y="761" text-anchor="middle">RAM</text><text class="n-sub" x="330" y="780" text-anchor="middle">সব data এখানে</text></g>
+        <g class="node hw" id="CACHE" data-band="b6"><rect class="n-shape" x="435" y="738" width="150" height="52" rx="9"/>
+          <text class="n-title" x="510" y="761" text-anchor="middle">CPU cache</text><text class="n-sub" x="510" y="780" text-anchor="middle">L1 · L2 · L3</text></g>
+        <g class="node hw" id="CPU" data-band="b6"><rect class="n-shape" x="615" y="738" width="150" height="52" rx="9"/>
+          <text class="n-title" x="690" y="761" text-anchor="middle">CPU core</text><text class="n-sub" x="690" y="780" text-anchor="middle">machine code চালায়</text></g>
+
+        <g class="dot a" id="dot" transform="translate(150 610)">
+          <rect class="dot-pill" id="dotPill" x="14" y="-30" width="10" height="24" rx="12"/>
+          <text class="dot-t" id="dotText" x="24" y="-13">fork + exec</text>
+          <circle class="dot-c" r="8"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="panel" aria-live="polite">
+      <div class="meta">
+        <span class="phase a" id="phase">একবার · server চালুর সময়</span>
+        <span class="stepno" id="stepno">ধাপ ১ / ২৭</span>
+      </div>
+      <span class="layer" id="layer"></span>
+      <h3 id="title"></h3>
+      <p id="text"></p>
+      <pre id="code"></pre>
+      <div class="controls">
+        <button class="ctl" id="prev" type="button">← আগের</button>
+        <button class="ctl primary" id="play" type="button">থামাও</button>
+        <button class="ctl" id="next" type="button">পরের →</button>
+        <button class="ctl" id="restart" type="button">শুরু থেকে</button>
+        <button class="ctl" id="toReq" type="button">request অংশে যাও</button>
+      </div>
+      <div class="progress" aria-hidden="true"><span id="bar" style="width:4%"></span></div>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>৬টা স্তর এক নজরে</h2>
+    <ul class="layers">
+      <li class="c-client"><b>বাইরে · client</b><span>Rust backend। request পাঠায়, উত্তর নেয়।</span></li>
+      <li class="c-os"><b>Linux kernel · network</b><span>NIC, TCP/IP আর socket। network এর সব কাজ kernel এর হাতে।</span></li>
+      <li class="c-proc"><b>Python process</b><span>uvicorn, Starlette, Pydantic আর তোমার কোড। এগুলো আমরা লিখি বা ব্যবহার করি।</span></li>
+      <li class="c-vm"><b>CPython VM</b><span>কোডকে bytecode বানায় (একবার), তারপর eval loop দিয়ে চালায় (প্রতিবার)। pymalloc memory দেয়।</span></li>
+      <li class="c-os"><b>Linux kernel · memory</b><span>process তৈরি, mmap দিয়ে memory দেওয়া, page table দিয়ে virtual ঠিকানাকে RAM এ মেলানো।</span></li>
+      <li class="c-hw"><b>Hardware</b><span>RAM এ data থাকে, cache হয়ে CPU তে আসে, CPU machine code চালায়।</span></li>
+    </ul>
+  </section>
+
+  <section class="sec">
+    <h2>memory leak: কেন হয়, কীভাবে এড়াবে</h2>
+    <div class="notes">
+      <div class="note">
+        <h3>১. request শেষেও কিছু ধরে রাখা</h3>
+<pre>ALL_ORDERS = []
+def create_order(order):
+    ALL_ORDERS.append(order)  # কখনো মোছে না</pre>
+        <p>global list বা dict এ প্রতিটা request এর জিনিস জমালে refcount কখনো ০ হয় না, pymalloc এর block ফুরায়, বারবার mmap হয়, RAM ভরে যায়। শেষে Linux এর OOM killer process বন্ধ করে দেয়। database এ রাখো, বা <code>deque(maxlen=1000)</code> এর মতো সীমা দাও। <code>@functools.cache</code> বা <code>lru_cache(maxsize=None)</code> সীমাহীন, তাই <code>maxsize</code> দাও।</p>
+      </div>
+      <div class="note">
+        <h3>২. বড় data একবারে memory তে আনা</h3>
+        <p>পুরো file বা database এর হাজার হাজার row একসাথে পড়লে একটা request এই অনেক memory নেয়, আর বড় অংশ সরাসরি kernel এর mmap এ যায়। অল্প অল্প করে পড়ো: generator, pagination, streaming response। একসাথে অনেক request এলে এই পার্থক্য বিশাল হয়ে যায়।</p>
+      </div>
+      <div class="note">
+        <h3>৩. memory না কমা মানেই leak না</h3>
+        <p>pymalloc kernel থেকে ১ MB এর খণ্ডে (arena) memory নেয়, পুরো খণ্ড খালি হলে তবেই ফেরত দেয়। তাই object মুছলেও htop এ সংখ্যা প্রায়ই কমে না। leak মানে request এর পর request memory বাড়তেই থাকা। একে অপরকে ধরে রাখা object (চক্র) মোছে garbage collector (<code>gc</code>)।</p>
+      </div>
+      <div class="note">
+        <h3>৪. leak খুঁজবে কীভাবে</h3>
+<pre>import tracemalloc
+tracemalloc.start()
+snap1 = tracemalloc.take_snapshot()
+# ... অনেকগুলো request পাঠাও ...
+snap2 = tracemalloc.take_snapshot()
+for s in snap2.compare_to(snap1, "lineno")[:5]:
+    print(s)  # কোন লাইন সবচেয়ে বেশি বাড়াল</pre>
+        <p>দুই সময়ের ছবি তুলে তুলনা করলে বোঝা যায় কোন লাইন memory জমাচ্ছে।</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var BN = ["০","১","২","৩","৪","৫","৬","৭","৮","৯"];
+  function bn(n) { return String(n).replace(/\d/g, function (d) { return BN[d]; }); }
+  function $(id) { return document.getElementById(id); }
+
+  var SRC_CODE = 'def create_order(order):\n    result = {"order_id": 101, "qty": order.qty}\n    return result';
+  var DIS = '  1  RESUME             0\n\n  2  LOAD_CONST         0 (\'order_id\')\n     LOAD_SMALL_INT     101\n     LOAD_CONST         1 (\'qty\')\n     LOAD_FAST_BORROW   0 (order)\n     LOAD_ATTR          0 (qty)\n     BUILD_MAP          2\n     STORE_FAST         1 (result)\n\n  3  LOAD_FAST_BORROW   1 (result)\n     RETURN_VALUE';
+  var LAYER = { b1: "স্তর: বাইরে · client", b2: "স্তর: Linux kernel · network", b3: "স্তর: Python process", b4: "স্তর: CPython VM", b5: "স্তর: Linux kernel · process আর memory", b6: "স্তর: Hardware" };
+
+  // k: "a" = startup, "req" = request going in, "ok" = response going out
+  var STEPS = [
+    { node: "EXEC", k: "a", also: ["RAM"], label: "fork + exec", title: "server চালু: kernel একটা process বানায়",
+      text: "terminal এ fastapi dev main.py লিখলে shell Linux kernel কে নতুন process তৈরি করতে বলে (fork + exec)। kernel python3.14 প্রোগ্রামটা RAM এ আনে। CPython নিজে C ভাষায় লেখা আর আগে থেকেই machine code এ compile করা, তাই CPU এটা সরাসরি চালাতে পারে।",
+      code: '$ fastapi dev main.py\nkernel: fork() → exec("/usr/bin/python3.14")\nkernel: নতুন process তৈরি, PID 4242' },
+    { edge: "e_ex_src", node: "SRC", k: "a", label: "read()", title: "main.py পড়া",
+      text: "Python তোমার main.py import করে। ফাইলটা disk এ আছে, তাই এখানেও kernel লাগে: read() system call দিয়ে লেখাটা memory তে আসে। এই অবস্থায় এটা শুধু অক্ষরের সারি, Python এখনো এর মানে বোঝে না।",
+      code: SRC_CODE },
+    { edge: "e_src_ast", node: "AST", k: "a", label: "parse", title: "tokens আর AST: কোডের গঠন বোঝা",
+      text: "প্রথমে tokenizer লেখাটাকে ছোট ছোট টুকরো (token) করে। তারপর parser টুকরোগুলো দিয়ে গাছের মতো একটা কাঠামো বানায়, নাম AST (Abstract Syntax Tree)। কোডে syntax ভুল থাকলে SyntaxError এখানেই আসে। নিচের output তোমার machine এর Python 3.14 থেকে নেওয়া।",
+      code: 'tokens:\n  NAME "result"   OP "="   OP "{"\n  STRING "order_id"   OP ":"   NUMBER 101   OP "}"\n\nAST:\n  Assign(\n    targets=[Name(id="result")],\n    value=Dict(keys=[Constant("order_id")],\n               values=[Constant(101)]))' },
+    { edge: "e_ast_bc", node: "BC", k: "a", label: "compile", title: "compile: bytecode তৈরি",
+      text: "compiler AST থেকে bytecode বানায়, মানে CPython VM এর জন্য সহজ নির্দেশের তালিকা। এটা machine code না, CPU সরাসরি বোঝে না। পরের বার দ্রুত চালু হতে Python এটা __pycache__/main.cpython-314.pyc ফাইলে রেখে দেয়। এই কাজ server চালুর সময় একবারই হয়, প্রতিটা request এ না। নিচে create_order() এর আসল bytecode (dis.dis দিয়ে দেখা)।",
+      code: DIS },
+    { edge: "e_bc_uv", node: "UV", k: "a", label: "start", title: "uvicorn এর event loop চালু",
+      text: "কোড তৈরি হলে uvicorn তার event loop চালু করে। এই loop ই এরপর সব request সামলাবে। একটা request এর জন্য অপেক্ষা করার সময়ও সে অন্য request এর কাজ চালিয়ে যেতে পারে।",
+      code: 'INFO:  Uvicorn running on http://127.0.0.1:8000' },
+    { edge: "e_uv_sock", node: "SOCK", k: "a", label: "listen()", title: "port খোলা, তারপর ঘুম",
+      text: "uvicorn kernel কে বলে port 8000 এ একটা socket খুলতে (socket, bind, listen)। তারপর epoll দিয়ে বলে: \"data এলে আমাকে জাগিও\"। request না আসা পর্যন্ত process ঘুমিয়ে থাকে, CPU এর কোনো সময় খরচ করে না।",
+      code: 'socket() → bind(:8000) → listen()\nepoll_wait()     # ঘুম... data এলে kernel জাগাবে' },
+
+    { reset: true, node: "R", k: "req", label: "POST /orders", title: "এবার একটা request আসে",
+      text: "এখান থেকে যা দেখবে, তা প্রতিটা request এ হয়। একজন কাস্টমার অর্ডার দিয়েছে, তাই Rust backend আমাদের server এ HTTP request পাঠায়।",
+      code: 'POST http://127.0.0.1:8000/orders\n{"product": "লাল শাড়ি", "qty": 2, "phone": "01712345678"}' },
+    { edge: "e_r_nic", node: "NIC", k: "req", also: ["RAM"], label: "packet", title: "network card এ পৌঁছায়",
+      text: "request টা ছোট ছোট packet হয়ে network দিয়ে আসে। server এর network card (NIC) packet গুলো DMA দিয়ে সরাসরি RAM এ লিখে রাখে, তারপর interrupt দিয়ে kernel কে জানায় যে data এসেছে।",
+      code: 'NIC: packet এসেছে → RAM এ রাখলাম (DMA)\nNIC → kernel: interrupt!' },
+    { edge: "e_nic_tcp", node: "TCP", k: "req", label: "packet", title: "TCP/IP stack packet জোড়া লাগায়",
+      text: "kernel এর TCP/IP অংশ packet গুলো সঠিক ক্রমে সাজায়, কোনোটা হারালে আবার চায়, আর দেখে এটা কোন port এর জন্য। এখানে port 8000।",
+      code: 'packet 1 + 2 + 3  →  পুরো HTTP request\nগন্তব্য: port 8000' },
+    { edge: "e_tcp_sock", node: "SOCK", k: "req", label: "data", title: "socket এ জমা, uvicorn জাগে",
+      text: "data টা port 8000 এর socket buffer এ জমা হয়। ঘুমন্ত uvicorn কে epoll এবার জাগিয়ে দেয়।",
+      code: 'socket buffer: "POST /orders HTTP/1.1 ..."\nepoll: uvicorn, data এসেছে!' },
+    { edge: "e_sock_uv", node: "UV", k: "req", label: "recv()", title: "recv(): kernel থেকে process এ",
+      text: "uvicorn recv() system call দেয়। kernel socket buffer থেকে data কপি করে process এর নিজের memory তে দেয়। এখন request টা Python এর heap এ একটা bytes object।",
+      code: 'data = recv(sock)      # kernel → process\n# b\'POST /orders HTTP/1.1\\r\\n...\'' },
+    { edge: "e_uv_st", node: "ST", k: "req", label: "POST /orders", title: "Starlette route খোঁজে",
+      text: "uvicorn bytes থেকে HTTP এর অংশগুলো (method, URL, header, body) আলাদা করে app কে দেয়। Starlette URL মিলিয়ে দেখে: POST /orders এর কাজ করবে create_order()।",
+      code: 'GET  /health    ✗\nPOST /orders    ✓  → create_order()' },
+    { edge: "e_st_py", node: "PY", k: "req", label: "validate", title: "Pydantic যাচাই করে",
+      text: "Pydantic data পরীক্ষা করে একটা Order object বানায়। Pydantic এর মূল অংশ (pydantic-core) Rust এ লেখা আর আগে থেকেই machine code, তাই এই যাচাই খুব দ্রুত হয়।",
+      code: 'product: str  ✓\nqty:     int  ✓\nphone:   str  ✓\n→ Order(product="লাল শাড়ি", qty=2, ...)' },
+    { edge: "e_py_code", node: "CODE", k: "req", label: "call", title: "create_order() call হয়",
+      text: "FastAPI তোমার function call করে। এর জন্য VM একটা নতুন frame বানায়, যেখানে order আর result variable এর জায়গা থাকে। কিন্তু function টা চালায় কে? চলো নিচের স্তরে যাই।",
+      code: 'create_order(order)        # নতুন frame\n  order  → Order object\n  result → (এখনো খালি)' },
+    { edge: "e_code_eval", node: "EVAL", k: "req", label: "bytecode", title: "VM এর eval loop bytecode চালায়",
+      text: "এটাই আসল ইঞ্জিন। eval loop একটা বিশাল loop: bytecode থেকে একটা instruction নেয়, তার জন্য লেখা C কোড চালায়, তারপর পরেরটা নেয়। Python 3.11 থেকে VM বারবার চলা instruction কে বিশেষ দ্রুত রূপে বদলে নেয় (specializing interpreter)। Python 3.13 থেকে পরীক্ষামূলক JIT ও আছে, তবে default এ বন্ধ।",
+      code: 'while True:\n    instr = next(bytecode)\n    LOAD_CONST   → constant টা stack এ রাখো\n    LOAD_ATTR    → order.qty পড়ো\n    BUILD_MAP    → নতুন dict বানাও\n    STORE_FAST   → result এ রাখো\n    RETURN_VALUE → ফেরত দাও' },
+    { edge: "e_eval_pym", node: "PYM", k: "req", label: "alloc", title: "BUILD_MAP: নতুন dict এর memory",
+      text: "BUILD_MAP instruction এ একটা নতুন dict লাগবে। VM pymalloc এর কাছে memory চায়। ছোট object (৫১২ byte এর কম), তাই pymalloc নিজের কাছে রাখা খালি block থেকে দিয়ে দেয়। বেশিরভাগ সময় এখানেই শেষ, kernel পর্যন্ত যেতে হয় না।",
+      code: 'BUILD_MAP 2\n→ pymalloc: একটা খালি block দাও\n← block পেলাম (kernel লাগেনি)' },
+    { edge: "e_pym_sys", node: "SYS", k: "req", label: "mmap()", title: "block ফুরালে kernel এর কাছে",
+      text: "pymalloc এর হাতের সব block ভরে গেলে সে kernel এর কাছে একটা বড় খণ্ড (arena, ১ MB) চায় mmap system call দিয়ে। system call মানে process কিছুক্ষণ থেমে kernel কে কাজ করতে দেয়, তাই এটা সাধারণ block দেওয়ার চেয়ে অনেক ধীর।",
+      code: 'mmap(1 MB)      # kernel, আমাকে memory দাও' },
+    { edge: "e_sys_page", node: "PAGE", k: "req", label: "virtual", title: "kernel শুধু ঠিকানা দেয়",
+      text: "kernel সাথে সাথে আসল RAM দেয় না। শুধু একটা ঠিকানার পরিসর (virtual memory) দেয় আর page table এ লিখে রাখে। প্রতিটা process ভাবে পুরো memory তার একার। কোন virtual ঠিকানা আসলে RAM এর কোথায়, সেটা ঠিক করে page table।",
+      code: 'virtual 0x7f3a_1c00_0000  →  (এখনো RAM নেই)' },
+    { edge: "e_page_ram", node: "RAM", k: "req", label: "page fault", title: "প্রথম লেখায় আসল RAM",
+      text: "প্রোগ্রাম যখন প্রথমবার সেই memory তে লেখে, তখন page fault হয়। kernel তখন RAM থেকে একটা ৪ KB এর page দিয়ে page table আপডেট করে। এরপর CPU এর ভেতরের MMU নিজেই virtual ঠিকানাকে RAM এর আসল ঠিকানায় অনুবাদ করে।",
+      code: 'page fault!\nkernel: একটা ৪ KB RAM page দিলাম\nvirtual 0x7f3a_1c00_0000 → physical 0x1_3d4f_2000' },
+    { edge: "e_ram_cache", node: "CACHE", k: "req", label: "cache line", title: "RAM থেকে CPU cache এ",
+      text: "CPU সরাসরি RAM থেকে কাজ করে না, কারণ RAM তুলনায় অনেক ধীর। data ৬৪ byte এর টুকরোয় (cache line) CPU এর cache এ আসে। L1 cache থেকে পড়তে মোটামুটি ১ ns লাগে, RAM থেকে প্রায় ১০০ ns। তাই কাছাকাছি রাখা data দ্রুত চলে।",
+      code: 'RAM → L3 → L2 → L1 → register\nএকবারে ৬৪ byte (cache line)' },
+    { edge: "e_cache_cpu", node: "CPU", k: "req", label: "execute", title: "CPU machine code চালায়",
+      text: "শেষ পর্যন্ত সব কাজ করে CPU core। সে eval loop এর machine code এর instruction একটা একটা করে আনে (fetch), বোঝে (decode), চালায় (execute), আর সংখ্যাগুলো রাখে register এ। সেকেন্ডে কয়েকশো কোটি বার।",
+      code: '; উদাহরণ: x86-64 machine instruction\nmov  rax, [rbx+16]   ; memory থেকে register এ\nadd  rax, 1\ncmp  rax, rcx\njne  next_instr' },
+    { edge: "e_cpu_code", node: "CODE", k: "req", label: "পরের instruction", title: "পরের instruction, আবার একই চক্র",
+      text: "একটা bytecode instruction শেষ হলে VM পরেরটা নেয়, আর একই চক্র চলে: eval loop → (দরকার হলে memory) → RAM → cache → CPU। create_order() এর ১০টা bytecode instruction এর প্রতিটার জন্য CPU অনেকগুলো machine instruction চালায়।",
+      code: DIS },
+    { edge: "e_code_st", node: "ST", k: "ok", label: "200 OK", title: "return: response তৈরি",
+      text: "RETURN_VALUE এ dict ফেরত আসে, frame টা stack থেকে সরে যায়। Starlette dict কে JSON bytes বানায়, সাথে status 200 (সফল)।",
+      code: '200 OK\n{"order_id": 101, "qty": 2}' },
+    { edge: "e_st_uv", node: "UV", k: "ok", label: "200 OK", title: "uvicorn এর হাতে",
+      text: "JSON bytes পাঠানোর জন্য uvicorn এর কাছে যায়।",
+      code: 'response → uvicorn' },
+    { edge: "e_uv_sock", node: "SOCK", k: "ok", label: "send()", title: "send(): process থেকে kernel এ",
+      text: "uvicorn send() system call দেয়। kernel bytes গুলো process এর memory থেকে socket এর send buffer এ কপি করে নেয়। ঢোকার মতো বের হওয়াও kernel এর মাধ্যমে।",
+      code: 'send(sock, b\'HTTP/1.1 200 OK\\r\\n...\')' },
+    { edge: ["e_sock_tcp", "e_tcp_nic", "e_nic_r"], node: "R", k: "ok", label: "200 OK", title: "network দিয়ে Rust এ ফেরত",
+      text: "kernel এর TCP/IP stack data কে packet এ ভাগ করে, NIC সেগুলো network এ পাঠিয়ে দেয়। Rust backend উত্তর পায়, অর্ডার তৈরি।",
+      code: '200 OK\n{"order_id": 101, "qty": 2}' },
+    { node: "PYM", k: "ok", also: ["UV", "SOCK"], label: "free", title: "শেষে: পরিষ্কার",
+      text: "উত্তর চলে গেলে request এর bytes, Order আর dict কে আর কেউ ধরে নেই। refcount ০ হয়ে সব মুছে যায়, block গুলো pymalloc এ ফেরত যায় পরের request এর জন্য। uvicorn আবার epoll_wait এ ঘুমাতে যায়। পরের request এলে ৭ নম্বর ধাপ থেকে আবার শুরু।",
+      code: 'refcount 0 → bytes, Order, dict মুছে গেল\nblock → pymalloc এ ফেরত\nuvicorn: epoll_wait()   # আবার ঘুম' }
+  ];
+
+  var NODE_IDS = ["R","NIC","TCP","SOCK","UV","ST","PY","CODE","SRC","AST","BC","EVAL","PYM","EXEC","SYS","PAGE","RAM","CACHE","CPU"];
+  var EDGE_IDS = Array.prototype.map.call(document.querySelectorAll("path.edge"), function (p) { return p.id; });
+  var BANDS = ["b1","b2","b3","b4","b5","b6"];
+  var REQ_START = 6;
+  var TRAVEL_MS = 1100, FAST_MS = 560, HOLD_MS = 5200;
+
+  var dot = $("dot"), dotText = $("dotText"), dotPill = $("dotPill");
+  var el = { phase: $("phase"), stepno: $("stepno"), layer: $("layer"), title: $("title"), text: $("text"), code: $("code"), play: $("play"), bar: $("bar") };
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var st = { i: 0, playing: !reduce, timer: null, raf: null, token: 0 };
+
+  function edgesOf(s) { return !s.edge ? [] : (Array.isArray(s.edge) ? s.edge : [s.edge]); }
+
+  function placeDot(x, y) {
+    dot.setAttribute("transform", "translate(" + x + " " + y + ")");
+    var w = 0;
+    try { w = dotText.getComputedTextLength(); } catch (e) { w = dotText.textContent.length * 8; }
+    var pad = 9, px = x > 600 ? -(14 + w + pad * 2) : 14;
+    dotPill.setAttribute("x", px);
+    dotPill.setAttribute("width", w + pad * 2);
+    dotText.setAttribute("x", px + pad);
+  }
+
+  function nodeAnchor(id) {
+    var r = $(id).querySelector(".n-shape");
+    var x = Number(r.getAttribute("x")), y = Number(r.getAttribute("y")), w = Number(r.getAttribute("width"));
+    return { x: x + w / 2, y: y };
+  }
+
+  function setEdge(id, kind) {
+    var p = $(id);
+    p.classList.remove("t-a", "t-req", "t-ok");
+    if (kind) p.classList.add("t-" + kind);
+    p.setAttribute("marker-end", "url(#ah-" + (kind || "base") + ")");
+  }
+
+  function animatePath(p, ms, token, done) {
+    var len = p.getTotalLength();
+    if (reduce) { var e = p.getPointAtLength(len); placeDot(e.x, e.y); done(); return; }
+    var t0 = null;
+    function frame(now) {
+      if (token !== st.token) return;
+      if (t0 === null) t0 = now;
+      var t = Math.min(1, (now - t0) / ms);
+      var ease = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      var pt = p.getPointAtLength(len * ease);
+      placeDot(pt.x, pt.y);
+      if (t < 1) st.raf = requestAnimationFrame(frame); else done();
+    }
+    st.raf = requestAnimationFrame(frame);
+  }
+
+  function travel(edges, ms, kind, token, done) {
+    var k = 0;
+    (function next() {
+      if (token !== st.token) return;
+      if (k >= edges.length) { done(); return; }
+      var id = edges[k++];
+      animatePath($(id), ms, token, function () { setEdge(id, kind); next(); });
+    })();
+  }
+
+  function paint(animate) {
+    var s = STEPS[st.i];
+    var token = ++st.token;
+    cancelAnimationFrame(st.raf);
+    clearTimeout(st.timer);
+
+    EDGE_IDS.forEach(function (id) { setEdge(id, null); });
+    var from = 0;
+    for (var r = 0; r <= st.i; r++) if (STEPS[r].reset) from = r;
+    for (var j = from; j < st.i; j++) {
+      var sj = STEPS[j];
+      edgesOf(sj).forEach(function (id) { setEdge(id, sj.k); });
+    }
+
+    NODE_IDS.forEach(function (id) { $(id).classList.remove("active", "touch"); });
+    BANDS.forEach(function (b) { $(b).classList.remove("on"); });
+
+    var isReq = st.i >= REQ_START;
+    el.phase.className = "phase " + (isReq ? "b" : "a");
+    el.phase.textContent = isReq ? "প্রতিটা request এ" : "একবার · server চালুর সময়";
+    el.stepno.textContent = "ধাপ " + bn(st.i + 1) + " / " + bn(STEPS.length);
+    el.layer.textContent = LAYER[$(s.node).getAttribute("data-band")];
+    el.title.textContent = s.title;
+    el.text.textContent = s.text;
+    el.code.textContent = s.code;
+    el.bar.style.width = ((st.i + 1) / STEPS.length * 100) + "%";
+    el.play.textContent = st.playing ? "থামাও" : "চালাও";
+
+    dot.setAttribute("class", "dot" + (s.k === "a" ? " a" : s.k === "ok" ? " ok" : ""));
+    dotText.textContent = s.label;
+
+    function arrive() {
+      if (token !== st.token) return;
+      $(s.node).classList.add("active");
+      $($(s.node).getAttribute("data-band")).classList.add("on");
+      (s.also || []).forEach(function (id) { $(id).classList.add("touch"); });
+      schedule();
+    }
+
+    var edges = edgesOf(s);
+    if (!edges.length) { var a = nodeAnchor(s.node); placeDot(a.x, a.y); arrive(); return; }
+    if (animate) {
+      var p0 = $(edges[0]).getPointAtLength(0);
+      placeDot(p0.x, p0.y);
+      travel(edges, edges.length > 1 ? FAST_MS : TRAVEL_MS, s.k, token, arrive);
+    } else {
+      edges.forEach(function (id) { setEdge(id, s.k); });
+      var last = $(edges[edges.length - 1]);
+      var e = last.getPointAtLength(last.getTotalLength());
+      placeDot(e.x, e.y);
+      arrive();
+    }
+  }
+
+  function schedule() {
+    clearTimeout(st.timer);
+    if (!st.playing) return;
+    st.timer = setTimeout(function () {
+      if (st.i < STEPS.length - 1) go(st.i + 1, true);
+      else { st.playing = false; el.play.textContent = "চালাও"; }
+    }, HOLD_MS);
+  }
+
+  function go(i, animate) { st.i = i; paint(animate); }
+
+  $("prev").addEventListener("click", function () { if (st.i > 0) go(st.i - 1, false); });
+  $("next").addEventListener("click", function () { if (st.i < STEPS.length - 1) go(st.i + 1, true); });
+  $("restart").addEventListener("click", function () { st.playing = true; go(0, true); });
+  $("toReq").addEventListener("click", function () { go(REQ_START, false); });
+  el.play.addEventListener("click", function () {
+    st.playing = !st.playing;
+    el.play.textContent = st.playing ? "থামাও" : "চালাও";
+    if (!st.playing) { clearTimeout(st.timer); return; }
+    if (st.i === STEPS.length - 1) { go(0, true); return; }
+    schedule();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight" && st.i < STEPS.length - 1) go(st.i + 1, true);
+    if (e.key === "ArrowLeft" && st.i > 0) go(st.i - 1, false);
+  });
+
+  go(0, false);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { var a = nodeAnchor(STEPS[st.i].node); if (!edgesOf(STEPS[st.i]).length) placeDot(a.x, a.y); });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,84 @@
+/* বাংলা লেখার জন্য font আর রং */
+:root {
+  --vp-font-family-base: 'Hind Siliguri', 'Noto Sans Bengali', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --vp-font-family-mono: ui-monospace, 'JetBrains Mono', 'SFMono-Regular', Menlo, monospace;
+
+  --vp-c-brand-1: #3f51c4;
+  --vp-c-brand-2: #5262d4;
+  --vp-c-brand-3: #6573e0;
+  --vp-c-brand-soft: rgba(70, 85, 201, 0.14);
+}
+
+.dark {
+  --vp-c-brand-1: #9aa5ff;
+  --vp-c-brand-2: #8591f5;
+  --vp-c-brand-3: #6f7cea;
+  --vp-c-brand-soft: rgba(146, 157, 255, 0.16);
+}
+
+/* বাংলা অক্ষরে একটু বেশি লাইনের জায়গা লাগে */
+.vp-doc p,
+.vp-doc li {
+  line-height: 1.85;
+  font-size: 16.5px;
+}
+
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3 {
+  line-height: 1.4;
+}
+
+/* animation আছে এমন পেজ চওড়া করা (frontmatter: pageClass: wide-page) */
+.wide-page .VPDoc .container,
+.wide-page .VPDoc .content,
+.wide-page .VPDoc .content-container {
+  max-width: 1180px !important;
+}
+
+/* নোটের ভেতরে বসানো animation */
+.demo-frame {
+  display: block;
+  width: 100%;
+  height: 900px;
+  margin: 16px 0 8px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  background: var(--vp-c-bg-soft);
+}
+
+@media (max-width: 640px) {
+  .demo-frame {
+    height: 720px;
+  }
+}
+
+/* breadcrumb */
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  font-size: 13.5px;
+  color: var(--vp-c-text-2);
+}
+
+.breadcrumb a {
+  color: var(--vp-c-text-2);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.breadcrumb a:hover {
+  color: var(--vp-c-brand-1);
+}
+
+.breadcrumb .sep {
+  color: var(--vp-c-text-3);
+}
+
+.breadcrumb .current {
+  color: var(--vp-c-text-1);
+  font-weight: 500;
+}
