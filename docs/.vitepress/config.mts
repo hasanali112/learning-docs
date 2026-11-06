@@ -36,8 +36,7 @@ export default defineConfig({
 
     socialLinks: [
       { icon: 'github', link: 'https://github.com/hasanali112/learning-docs' },
-      // নিজের LinkedIn profile এর লিংক বসিয়ে দাও
-      { icon: 'linkedin', link: 'https://www.linkedin.com/' },
+      { icon: 'linkedin', link: 'https://www.linkedin.com/in/md-hasan-ali-khan' },
     ],
 
     search: {
