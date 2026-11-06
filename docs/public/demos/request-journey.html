@@ -134,6 +134,70 @@ pre { margin: 0; background: var(--code-bg); border-radius: 10px; padding: 12px 
 .note h3 { font-family: var(--display); font-weight: 650; font-size: 18px; margin: 0; text-wrap: balance; }
 .note p { margin: 0; color: var(--muted); }
 
+/* zoom-in: eval loop, pymalloc, mmap, page fault */
+.viz { display: flex; flex-direction: column; gap: 10px; background: var(--code-bg); border-radius: 10px; padding: 12px 14px; font: 400 12px/1.5 var(--mono); min-width: 0; min-height: 220px; }
+.viz[hidden], pre[hidden] { display: none; }
+.vh { font: 500 11px var(--mono); letter-spacing: .05em; color: var(--muted); margin-bottom: 4px; }
+.cap { margin: 0; font: 400 14.5px/1.6 var(--body); color: var(--fg); min-height: 4.8em; }
+.cap b { font-family: var(--mono); font-weight: 500; font-size: 13px; }
+.x { opacity: 0; transform: translateY(4px); transition: opacity .35s, transform .35s; }
+.x.show { opacity: 1; transform: none; }
+.cycle { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 11.5px var(--body); padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); transition: background .2s, color .2s; }
+.chip.on { background: var(--vm); border-color: var(--vm); color: var(--bg); }
+.ev { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 12px; }
+.bc { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
+.bc li { padding: 1px 6px; border-radius: 4px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 3px solid transparent; }
+.bc li.done { color: var(--fg); }
+.bc li.cur { color: var(--fg); background: color-mix(in srgb, var(--vm) 20%, transparent); border-left-color: var(--vm); }
+.stack { display: flex; flex-direction: column-reverse; justify-content: flex-start; gap: 4px; min-height: 120px; padding: 6px; border: 1.5px solid var(--line); border-top: none; border-radius: 0 0 6px 6px; margin-bottom: 8px; }
+.sv { background: var(--surface); border: 1px solid var(--vm); border-radius: 5px; padding: 1px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: pop .25s ease-out; }
+.sv.big { border-color: var(--py); color: var(--py); }
+.locals div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.locals .chg { color: var(--code); font-weight: 500; }
+@keyframes pop { from { transform: translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
+.req { align-self: flex-start; padding: 2px 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); }
+.arena { border: 1.5px solid var(--py); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+.arena-h { color: var(--py); font-weight: 500; margin-bottom: 2px; }
+.pool { display: grid; grid-template-columns: 78px minmax(0, 1fr); align-items: center; gap: 8px; padding: 3px 4px; border-radius: 5px; transition: background .3s; }
+.pool.hl { background: color-mix(in srgb, var(--py) 16%, transparent); }
+.pool.full { background: color-mix(in srgb, var(--err) 14%, transparent); }
+.blocks { display: flex; flex-wrap: wrap; gap: 3px; }
+.blk { width: 13px; height: 13px; border-radius: 3px; border: 1.5px solid color-mix(in srgb, var(--py) 55%, transparent); transition: background .3s, transform .3s; }
+.blk.f { background: color-mix(in srgb, var(--py) 40%, transparent); border-color: transparent; }
+.blk.pick { outline: 2px solid var(--fg); outline-offset: 2px; }
+.blk.new { background: var(--py); border-color: var(--py); transform: scale(1.15); }
+.more { color: var(--muted); font-size: 11.5px; }
+.seq { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 7px 10px; }
+.lane-h { font: 500 11px var(--mono); padding: 3px 6px; border-radius: 5px; text-align: center; }
+.lane-h.u { color: var(--py); border: 1px solid var(--py); }
+.lane-h.k { color: var(--os); border: 1px solid var(--os); }
+.box { padding: 4px 8px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); }
+.box.u { grid-column: 1; } .box.k { grid-column: 2; } .box.wide { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.msg { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; }
+.msg.r { color: var(--os); } .msg.l { color: var(--py); }
+.msg .ln { flex: 1; height: 2px; background: currentColor; position: relative; }
+.msg.r .ln::after, .msg.l .ln::before { content: ""; position: absolute; top: -4px; border: 5px solid transparent; }
+.msg.r .ln::after { right: -2px; border-left: 8px solid currentColor; border-right: 0; }
+.msg.l .ln::before { left: -2px; border-right: 8px solid currentColor; border-left: 0; }
+.pages, .frames { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+.pg, .fr { width: 16px; height: 16px; border-radius: 3px; transition: background .3s, border-color .3s, box-shadow .3s; }
+.pg { border: 1.5px dashed var(--muted); }
+.pg.hot { border: 1.5px solid var(--err); box-shadow: 0 0 0 3px color-mix(in srgb, var(--err) 25%, transparent); }
+.pg.ram { border: 1.5px solid var(--hw); background: var(--hw); }
+.fr { background: color-mix(in srgb, var(--muted) 35%, transparent); }
+.fr.free { background: transparent; border: 1.5px solid var(--hw); }
+.fr.pick { box-shadow: 0 0 0 3px color-mix(in srgb, var(--hw) 35%, transparent); }
+.fr.take { background: var(--hw); border-color: var(--hw); }
+.pt { width: 100%; border-collapse: collapse; }
+.pt th, .pt td { padding: 3px 6px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; transition: background .3s; }
+.pt th { color: var(--muted); font-weight: 500; font-size: 11px; }
+.pt .empty { color: var(--muted); }
+.pt .set { color: var(--hw); font-weight: 500; }
+.pt tr.hot td { background: color-mix(in srgb, var(--err) 14%, transparent); }
+.pt tr.ok td { background: color-mix(in srgb, var(--hw) 16%, transparent); }
+.flag { align-self: flex-start; padding: 2px 10px; border-radius: 6px; font-weight: 500; color: var(--err); border: 1px solid var(--err); }
+
 @media (max-width: 960px) {
   .main, .notes { grid-template-columns: minmax(0, 1fr); }
   .layers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -263,6 +327,7 @@ pre { margin: 0; background: var(--code-bg); border-radius: 10px; padding: 12px 
       <span class="layer" id="layer"></span>
       <h3 id="title"></h3>
       <p id="text"></p>
+      <div class="viz" id="viz" hidden></div>
       <pre id="code"></pre>
       <div class="controls">
         <button class="ctl" id="prev" type="button">← আগের</button>
@@ -281,8 +346,8 @@ pre { margin: 0; background: var(--code-bg); border-radius: 10px; padding: 12px 
       <li class="c-client"><b>বাইরে · client</b><span>Rust backend। request পাঠায়, উত্তর নেয়।</span></li>
       <li class="c-os"><b>Linux kernel · network</b><span>NIC, TCP/IP আর socket। network এর সব কাজ kernel এর হাতে।</span></li>
       <li class="c-proc"><b>Python process</b><span>uvicorn, Starlette, Pydantic আর তোমার কোড। এগুলো আমরা লিখি বা ব্যবহার করি।</span></li>
-      <li class="c-vm"><b>CPython VM</b><span>কোডকে bytecode বানায় (একবার), তারপর eval loop দিয়ে চালায় (প্রতিবার)। pymalloc memory দেয়।</span></li>
-      <li class="c-os"><b>Linux kernel · memory</b><span>process তৈরি, mmap দিয়ে memory দেওয়া, page table দিয়ে virtual ঠিকানাকে RAM এ মেলানো।</span></li>
+      <li class="c-vm"><b>CPython VM</b><span>কোডকে bytecode বানায় (একবার)। eval loop প্রতিটা instruction পড়ে, চেনে, চালায় (প্রতিবার)। ছোট object এর memory দেয় pymalloc, নিজের জমানো block থেকে।</span></li>
+      <li class="c-os"><b>Linux kernel · memory</b><span>process তৈরি। mmap এ শুধু ঠিকানা দেয়, প্রথম লেখায় page fault হলে আসল RAM frame বসিয়ে page table এ লেখে।</span></li>
       <li class="c-hw"><b>Hardware</b><span>RAM এ data থাকে, cache হয়ে CPU তে আসে, CPU machine code চালায়।</span></li>
     </ul>
   </section>
@@ -375,21 +440,21 @@ for s in snap2.compare_to(snap1, "lineno")[:5]:
     { edge: "e_py_code", node: "CODE", k: "req", label: "call", title: "create_order() call হয়",
       text: "FastAPI তোমার function call করে। এর জন্য VM একটা নতুন frame বানায়, যেখানে order আর result variable এর জায়গা থাকে। কিন্তু function টা চালায় কে? চলো নিচের স্তরে যাই।",
       code: 'create_order(order)        # নতুন frame\n  order  → Order object\n  result → (এখনো খালি)' },
-    { edge: "e_code_eval", node: "EVAL", k: "req", label: "bytecode", title: "VM এর eval loop bytecode চালায়",
-      text: "এটাই আসল ইঞ্জিন। eval loop একটা বিশাল loop: bytecode থেকে একটা instruction নেয়, তার জন্য লেখা C কোড চালায়, তারপর পরেরটা নেয়। Python 3.11 থেকে VM বারবার চলা instruction কে বিশেষ দ্রুত রূপে বদলে নেয় (specializing interpreter)। Python 3.13 থেকে পরীক্ষামূলক JIT ও আছে, তবে default এ বন্ধ।",
-      code: 'while True:\n    instr = next(bytecode)\n    LOAD_CONST   → constant টা stack এ রাখো\n    LOAD_ATTR    → order.qty পড়ো\n    BUILD_MAP    → নতুন dict বানাও\n    STORE_FAST   → result এ রাখো\n    RETURN_VALUE → ফেরত দাও' },
-    { edge: "e_eval_pym", node: "PYM", k: "req", label: "alloc", title: "BUILD_MAP: নতুন dict এর memory",
-      text: "BUILD_MAP instruction এ একটা নতুন dict লাগবে। VM pymalloc এর কাছে memory চায়। ছোট object (৫১২ byte এর কম), তাই pymalloc নিজের কাছে রাখা খালি block থেকে দিয়ে দেয়। বেশিরভাগ সময় এখানেই শেষ, kernel পর্যন্ত যেতে হয় না।",
-      code: 'BUILD_MAP 2\n→ pymalloc: একটা খালি block দাও\n← block পেলাম (kernel লাগেনি)' },
-    { edge: "e_pym_sys", node: "SYS", k: "req", label: "mmap()", title: "block ফুরালে kernel এর কাছে",
-      text: "pymalloc এর হাতের সব block ভরে গেলে সে kernel এর কাছে একটা বড় খণ্ড (arena, ১ MB) চায় mmap system call দিয়ে। system call মানে process কিছুক্ষণ থেমে kernel কে কাজ করতে দেয়, তাই এটা সাধারণ block দেওয়ার চেয়ে অনেক ধীর।",
-      code: 'mmap(1 MB)      # kernel, আমাকে memory দাও' },
-    { edge: "e_sys_page", node: "PAGE", k: "req", label: "virtual", title: "kernel শুধু ঠিকানা দেয়",
-      text: "kernel সাথে সাথে আসল RAM দেয় না। শুধু একটা ঠিকানার পরিসর (virtual memory) দেয় আর page table এ লিখে রাখে। প্রতিটা process ভাবে পুরো memory তার একার। কোন virtual ঠিকানা আসলে RAM এর কোথায়, সেটা ঠিক করে page table।",
-      code: 'virtual 0x7f3a_1c00_0000  →  (এখনো RAM নেই)' },
-    { edge: "e_page_ram", node: "RAM", k: "req", label: "page fault", title: "প্রথম লেখায় আসল RAM",
-      text: "প্রোগ্রাম যখন প্রথমবার সেই memory তে লেখে, তখন page fault হয়। kernel তখন RAM থেকে একটা ৪ KB এর page দিয়ে page table আপডেট করে। এরপর CPU এর ভেতরের MMU নিজেই virtual ঠিকানাকে RAM এর আসল ঠিকানায় অনুবাদ করে।",
-      code: 'page fault!\nkernel: একটা ৪ KB RAM page দিলাম\nvirtual 0x7f3a_1c00_0000 → physical 0x1_3d4f_2000' },
+    { edge: "e_code_eval", node: "EVAL", k: "req", label: "bytecode", title: "eval loop: VM এর আসল ইঞ্জিন", viz: "eval", hold: 21500,
+      text: "eval loop হলো CPython এর ভেতরের একটা C ফাংশন, যেটা নিজে আগেই machine code এ compile করা। এটা একটা বিশাল loop: প্রতিটা bytecode instruction এর জন্য তিনটা কাজ করে: পড়ে (fetch), চেনে (dispatch), তার C কোড চালায় (execute)। নিচে দেখো create_order() চলার সময় value stack কীভাবে বদলায়।",
+      code: '' },
+    { edge: "e_eval_pym", node: "PYM", k: "req", label: "alloc", title: "pymalloc: Python এর নিজের memory গুদাম", viz: "pym", hold: 11000,
+      text: "BUILD_MAP এ নতুন dict লাগবে, VM pymalloc এর কাছে memory চায়। pymalloc kernel থেকে ১ MiB এর arena আনে, তাকে ১৬ KiB এর pool এ ভাগ করে, আর প্রতিটা pool এ একই সাইজের block রাখে। শুধু ৫১২ byte বা তার ছোট object এখানে আসে।",
+      code: '' },
+    { edge: "e_pym_sys", node: "SYS", k: "req", label: "mmap()", title: "mmap: block ফুরালে kernel এর কাছে", viz: "mmap", hold: 10500,
+      text: "সব pool ভরে গেলে pymalloc mmap system call দিয়ে kernel এর কাছে নতুন arena (১ MiB) চায়। system call এর সময় CPU user mode ছেড়ে kernel mode এ যায়, process থেমে থাকে। তাই এটা pymalloc থেকে block নেওয়ার চেয়ে অনেক ধীর।",
+      code: '' },
+    { edge: "e_sys_page", node: "PAGE", k: "req", label: "virtual", title: "kernel শুধু ঠিকানা দেয়, RAM না", viz: "ptable", hold: 8500,
+      text: "kernel সাথে সাথে আসল RAM দেয় না। শুধু ঠিকানার একটা পরিসর (virtual memory) বরাদ্দ করে, process এর memory map এ লিখে রাখে। কোন virtual page আসলে RAM এর কোথায়, তা লেখা থাকে page table এ, আর এখনো সেটা খালি।",
+      code: '' },
+    { edge: "e_page_ram", node: "RAM", k: "req", label: "page fault", title: "page fault: প্রথম লেখায় আসল RAM", viz: "fault", hold: 11000,
+      text: "প্রথমবার সেই memory তে লেখার সময় page fault হয়। kernel তখন একটা ৪ KiB RAM frame দিয়ে page table আপডেট করে। এরপর CPU এর MMU নিজেই virtual ঠিকানাকে RAM এর আসল ঠিকানায় অনুবাদ করে।",
+      code: '' },
     { edge: "e_ram_cache", node: "CACHE", k: "req", label: "cache line", title: "RAM থেকে CPU cache এ",
       text: "CPU সরাসরি RAM থেকে কাজ করে না, কারণ RAM তুলনায় অনেক ধীর। data ৬৪ byte এর টুকরোয় (cache line) CPU এর cache এ আসে। L1 cache থেকে পড়তে মোটামুটি ১ ns লাগে, RAM থেকে প্রায় ১০০ ns। তাই কাছাকাছি রাখা data দ্রুত চলে।",
       code: 'RAM → L3 → L2 → L1 → register\nএকবারে ৬৪ byte (cache line)' },
@@ -411,8 +476,8 @@ for s in snap2.compare_to(snap1, "lineno")[:5]:
     { edge: ["e_sock_tcp", "e_tcp_nic", "e_nic_r"], node: "R", k: "ok", label: "200 OK", title: "network দিয়ে Rust এ ফেরত",
       text: "kernel এর TCP/IP stack data কে packet এ ভাগ করে, NIC সেগুলো network এ পাঠিয়ে দেয়। Rust backend উত্তর পায়, অর্ডার তৈরি।",
       code: '200 OK\n{"order_id": 101, "qty": 2}' },
-    { node: "PYM", k: "ok", also: ["UV", "SOCK"], label: "free", title: "শেষে: পরিষ্কার",
-      text: "উত্তর চলে গেলে request এর bytes, Order আর dict কে আর কেউ ধরে নেই। refcount ০ হয়ে সব মুছে যায়, block গুলো pymalloc এ ফেরত যায় পরের request এর জন্য। uvicorn আবার epoll_wait এ ঘুমাতে যায়। পরের request এলে ৭ নম্বর ধাপ থেকে আবার শুরু।",
+    { node: "PYM", k: "ok", also: ["UV", "SOCK"], label: "free", title: "শেষে: পরিষ্কার", viz: "free", hold: 9000,
+      text: "উত্তর চলে গেলে request এর bytes, Order আর dict কে আর কেউ ধরে নেই। refcount ০ হয়ে সব মুছে যায়, block গুলো pymalloc এ ফেরত যায় পরের request এর জন্য। uvicorn আবার epoll_wait এ ঘুমাতে যায়।",
       code: 'refcount 0 → bytes, Order, dict মুছে গেল\nblock → pymalloc এ ফেরত\nuvicorn: epoll_wait()   # আবার ঘুম' }
   ];
 
@@ -425,7 +490,156 @@ for s in snap2.compare_to(snap1, "lineno")[:5]:
   var dot = $("dot"), dotText = $("dotText"), dotPill = $("dotPill");
   var el = { phase: $("phase"), stepno: $("stepno"), layer: $("layer"), title: $("title"), text: $("text"), code: $("code"), play: $("play"), bar: $("bar") };
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var st = { i: 0, playing: !reduce, timer: null, raf: null, token: 0 };
+  var st = { i: 0, playing: !reduce, timer: null, raf: null, token: 0, vt: [] };
+
+  // ---- কাছ থেকে দেখা: eval loop, pymalloc, mmap, page table, page fault ----
+  var vizEl = $("viz");
+  var EV_MS = 1800;
+  function later(ms, fn) { st.vt.push(setTimeout(fn, reduce ? 0 : ms)); }
+  function clearViz() { st.vt.forEach(clearTimeout); st.vt = []; }
+  function q(sel) { return vizEl.querySelector(sel); }
+  function qa(sel) { return Array.prototype.slice.call(vizEl.querySelectorAll(sel)); }
+  function cap(html) { q(".cap").innerHTML = html; }
+  function show(n) { qa(".x")[n].classList.add("show"); }
+  function cells(cls, n) { var s = ""; for (var k = 0; k < n; k++) s += '<i class="' + cls + '"></i>'; return s; }
+
+  var DICT = "{order_id, qty}";
+  var EV = [
+    { i: "RESUME 0", s: [], c: "function শুরু। নতুন frame, stack খালি।" },
+    { i: "LOAD_CONST 'order_id'", s: ["'order_id'"], c: "constant 'order_id' এর reference stack এর উপরে রাখো।" },
+    { i: "LOAD_SMALL_INT 101", s: ["'order_id'", "101"], c: "ছোট int 101 রাখো। এটা আগে থেকেই বানানো, নতুন memory লাগে না।" },
+    { i: "LOAD_CONST 'qty'", s: ["'order_id'", "101", "'qty'"], c: "আরেকটা constant: 'qty'।" },
+    { i: "LOAD_FAST_BORROW order", s: ["'order_id'", "101", "'qty'", "order"], c: "local variable order এর reference stack এ তোলো।" },
+    { i: "LOAD_ATTR qty", s: ["'order_id'", "101", "'qty'", "2"], c: "উপর থেকে order নামিয়ে order.qty পড়ো, ফলাফল 2 রাখো।" },
+    { i: "BUILD_MAP 2", s: [DICT], big: true, c: "উপরের ৪টা জিনিস নামিয়ে নতুন dict বানাও। নতুন object মানে নতুন memory, তাই pymalloc এর কাছে চাওয়া হয় (পরের ধাপ)।" },
+    { i: "STORE_FAST result", s: [], loc: DICT, c: "dict টা stack থেকে নামিয়ে local variable result এ রাখো।" },
+    { i: "LOAD_FAST_BORROW result", s: [DICT], big: true, c: "ফেরত দেওয়ার জন্য result আবার stack এ তোলো।" },
+    { i: "RETURN_VALUE", s: [], c: "উপরের জিনিসটা নিয়ে function থেকে বের হও। এই frame এর কাজ শেষ।" }
+  ];
+
+  function setStack(box, prev, next, big) {
+    var k = 0;
+    while (k < prev.length && k < next.length && prev[k] === next[k]) k++;
+    while (box.children.length > k) box.removeChild(box.lastChild);
+    for (var n = k; n < next.length; n++) {
+      var d = document.createElement("div");
+      d.className = "sv" + (big ? " big" : "");
+      d.textContent = next[n];
+      box.appendChild(d);
+    }
+  }
+
+  var POOLS = [
+    { sz: 16, b: "111110111111" },
+    { sz: 32, b: "111111111111" },
+    { sz: 48, b: "110111011111" },
+    { sz: 64, b: "111011110111" }
+  ];
+  function poolHtml(freeMode) {
+    return '<div class="arena"><div class="arena-h">arena · ১ MiB · kernel থেকে mmap দিয়ে আনা</div>' +
+      POOLS.map(function (p) {
+        var blocks = p.b.split("").map(function (c, n) {
+          var cls = c === "1" ? "blk f" : "blk";
+          if (freeMode && p.sz === 48 && n === 2) cls = "blk new";
+          return '<i class="' + cls + '"></i>';
+        }).join("");
+        return '<div class="pool" data-sz="' + p.sz + '"><span>pool · ' + bn(p.sz) + ' B</span><span class="blocks">' + blocks + "</span></div>";
+      }).join("") +
+      '<div class="more">… আরো অনেক pool, প্রতিটা ১৬ KiB</div></div>';
+  }
+  function pool(sz) { return q('.pool[data-sz="' + sz + '"]'); }
+  function pick() { return pool(48).querySelectorAll(".blk")[2]; }
+
+  var PAGES = '<div class="pages">' + cells("pg", 12) + '<span class="more">… মোট ২৫৬টা page</span></div>';
+  var VADDR = ["0x7f3a1c000000", "0x7f3a1c001000", "0x7f3a1c002000", "0x7f3a1c003000"];
+
+  var VIZ = {
+    eval: function () {
+      vizEl.innerHTML =
+        '<div class="cycle"><span class="chip">১ · fetch: পড়ো</span><span class="chip">২ · dispatch: চেনো</span><span class="chip">৩ · execute: চালাও</span></div>' +
+        '<div class="ev"><div><div class="vh">bytecode · create_order()</div><ol class="bc">' +
+        EV.map(function (e) { return "<li>" + e.i + "</li>"; }).join("") +
+        '</ol></div><div><div class="vh">value stack</div><div class="stack"></div>' +
+        '<div class="vh">locals</div><div class="locals"><div>order = Order</div><div id="vRes">result = —</div></div></div></div>' +
+        '<p class="cap">eval loop শুরু হচ্ছে…</p>';
+      var lis = qa(".bc li"), chips = qa(".chip"), box = q(".stack"), prev = [];
+      function chip(n) { chips.forEach(function (c, k) { c.classList.toggle("on", k === n); }); }
+      EV.forEach(function (e, n) {
+        var t = n * EV_MS;
+        later(t, function () { if (n) lis[n - 1].className = "done"; lis[n].className = "cur"; chip(0); });
+        later(t + EV_MS / 4, function () { chip(1); });
+        later(t + EV_MS / 2, function () {
+          chip(2);
+          setStack(box, prev, e.s, e.big);
+          prev = e.s;
+          if (e.loc) { var r = $("vRes"); r.textContent = "result = " + e.loc; r.className = "chg"; }
+          cap("<b>" + e.i.split(" ")[0] + "</b> · " + e.c);
+        });
+      });
+      later(EV.length * EV_MS, function () {
+        lis[EV.length - 1].className = "done"; chip(-1);
+        cap("১০টা instruction, প্রতিটায় একই তিন ধাপ। Rust এ <b>a + b</b> একটাই CPU instruction, Python এ প্রতিটা ধাপের পেছনে অনেকগুলো। Python ধীর হওয়ার মূল কারণ এটাই।");
+      });
+    },
+
+    pym: function () {
+      vizEl.innerHTML = '<div class="req x">চাই: ৪০ byte (উদাহরণ)</div>' + poolHtml(false) + '<p class="cap"></p>';
+      later(0, function () { show(0); cap("BUILD_MAP এর dict এর জন্য memory চাই। ধরো ৪০ byte।"); });
+      later(1700, function () { pool(48).classList.add("hl"); cap("৫১২ byte এর ছোট, তাই pymalloc নিজেই সামলায়। সাইজ ১৬ এর গুণিতকে গোল হয়: ৪০ → ৪৮ byte। খোঁজা হবে শুধু ৪৮ byte এর pool এ।"); });
+      later(3600, function () { pick().classList.add("pick"); cap("প্রতিটা pool খালি block গুলোর একটা তালিকা রাখে (free list)। তালিকার প্রথম block টা নেয়, খুঁজতে হয় না।"); });
+      later(5400, function () { pick().className = "blk new"; cap("block টা dict পেয়ে গেল। kernel কে ডাকতে হয়নি, তাই খুব দ্রুত। বেশিরভাগ memory চাওয়া এখানেই শেষ হয়।"); });
+      later(7400, function () { pool(48).classList.remove("hl"); pool(32).classList.add("full"); cap("কিন্তু ৩২ byte এর pool টা দেখো, একদম ভরা। সব pool এভাবে ভরে গেলে নতুন arena লাগবে, তখন যেতে হয় kernel এর কাছে (পরের ধাপ)।"); });
+    },
+
+    mmap: function () {
+      vizEl.innerHTML = '<div class="seq">' +
+        '<div class="lane-h u">Python process · user mode</div><div class="lane-h k">Linux kernel · kernel mode</div>' +
+        '<div class="box u x">pymalloc: সব pool ভরা</div>' +
+        '<div class="msg r x"><span>mmap(1 MiB)</span><span class="ln"></span></div>' +
+        '<div class="box k x">পরিসর বরাদ্দ করলাম, RAM দিইনি</div>' +
+        '<div class="msg l x"><span class="ln"></span><span>' + VADDR[0] + '</span></div>' +
+        '<div class="box wide x"><span>নতুন arena:</span>' + PAGES + '</div>' +
+        '</div><p class="cap"></p>';
+      later(0, function () { show(0); cap("সব pool ভরা, খালি block নেই। এবার pymalloc কে kernel এর কাছে যেতে হবে।"); });
+      later(1800, function () { show(1); cap("pymalloc <b>mmap</b> system call দেয়। CPU user mode ছেড়ে kernel mode এ যায়, process এর কাজ এই সময় থেমে থাকে।"); });
+      later(3700, function () { show(2); cap("kernel process এর memory map এ লিখে রাখে: এই ১ MiB ঠিকানা এখন বৈধ। কিন্তু কোনো RAM দেয় না।"); });
+      later(5500, function () { show(3); cap("kernel শুরুর ঠিকানাটা ফেরত দেয়, CPU আবার user mode এ ফেরে।"); });
+      later(7200, function () { show(4); cap("pymalloc নতুন arena পেল: ১ MiB = ২৫৬টা ৪ KiB এর page। ডটেড ঘর মানে এর পেছনে এখনো কোনো RAM নেই।"); });
+    },
+
+    ptable: function () {
+      vizEl.innerHTML = '<div class="vh">virtual memory · নতুন arena</div>' + PAGES +
+        '<div class="vh">page table · এই process এর</div><table class="pt"><tr><th>virtual page</th><th>physical (RAM)</th></tr>' +
+        VADDR.map(function (a) { return '<tr class="x"><td>' + a + '</td><td class="empty">— খালি</td></tr>'; }).join("") +
+        '</table><p class="cap"></p>';
+      later(0, function () { cap("kernel শুধু ঠিকানা দিয়েছে। প্রতিটা ৪ KiB page এর জন্য page table এ একটা ঘর, কিন্তু physical দিকটা খালি।"); });
+      VADDR.forEach(function (a, n) { later(300 + n * 450, function () { show(n); }); });
+      later(3000, function () { cap("প্রতিটা process এর নিজের page table, তাই সবাই ভাবে পুরো memory তার একার। প্রতিটা memory access এ CPU এর MMU এই table দেখে ঠিকানা অনুবাদ করে।"); });
+    },
+
+    fault: function () {
+      var frames = ""; for (var k = 0; k < 14; k++) frames += '<i class="fr' + (k === 5 || k === 11 ? " free" : "") + '"></i>';
+      vizEl.innerHTML = '<div class="vh">virtual memory</div>' + PAGES +
+        '<table class="pt"><tr><th>virtual page</th><th>physical (RAM)</th></tr><tr id="vRow"><td>' + VADDR[0] + '</td><td class="empty" id="vPhys">— খালি</td></tr></table>' +
+        '<div class="flag x">page fault!</div>' +
+        '<div class="vh">RAM · ৪ KiB এর frame (ধূসর = অন্য কেউ ব্যবহার করছে)</div><div class="frames">' + frames + '</div>' +
+        '<p class="cap"></p>';
+      var pg0 = q(".pg"), row = $("vRow"), phys = $("vPhys"), fr = qa(".fr")[5];
+      later(0, function () { pg0.className = "pg hot"; cap("dict লিখতে CPU প্রথমবার " + VADDR[0] + " ঠিকানায় লিখতে যায়।"); });
+      later(1800, function () { row.className = "hot"; show(0); cap("MMU page table দেখে: এই page এর পেছনে কোনো RAM নেই। CPU থেমে kernel কে ডাকে। একেই বলে <b>page fault</b>।"); });
+      later(3800, function () { fr.className = "fr free pick"; cap("kernel দেখে ঠিকানাটা বৈধ (mmap করা ছিল)। RAM থেকে একটা খালি ৪ KiB frame নেয়, শূন্য দিয়ে ভরে।"); });
+      later(5700, function () { fr.className = "fr take"; phys.textContent = "0x13d4f2000"; phys.className = "set"; row.className = "ok"; cap("page table এ লেখে: এই virtual page = RAM এর এই frame।"); });
+      later(7600, function () { pg0.className = "pg ram"; qa(".x")[0].classList.remove("show"); cap("লেখার instruction আবার চলে, এবার সফল। বাকি ২৫৫টা page এখনো RAM ছাড়া, ব্যবহার হলে তবেই পাবে।"); });
+    },
+
+    free: function () {
+      vizEl.innerHTML = poolHtml(true) + '<p class="cap"></p>';
+      later(0, function () { pool(48).classList.add("hl"); cap("উত্তর চলে গেছে। dict কে আর কেউ ধরে নেই, refcount ০।"); });
+      later(1800, function () { pick().className = "blk pick"; cap("block খালি হয়ে আবার pool এর free list এ ফেরে। পরের request এর dict এখানেই বসবে।"); });
+      later(3800, function () { pick().className = "blk"; cap("block kernel কে ফেরত যায় না। পুরো arena (১ MiB) খালি হলে তবেই <b>munmap</b> দিয়ে ফেরত দেয়। তাই htop এ memory সহজে কমে না, এটা leak না।"); });
+      later(6000, function () { pool(48).classList.remove("hl"); cap("uvicorn আবার epoll_wait এ ঘুমায়। পরের request এলে ৭ নম্বর ধাপ থেকে আবার শুরু।"); });
+    }
+  };
 
   function edgesOf(s) { return !s.edge ? [] : (Array.isArray(s.edge) ? s.edge : [s.edge]); }
 
@@ -503,6 +717,10 @@ for s in snap2.compare_to(snap1, "lineno")[:5]:
     el.title.textContent = s.title;
     el.text.textContent = s.text;
     el.code.textContent = s.code;
+    clearViz();
+    vizEl.innerHTML = "";
+    vizEl.hidden = !s.viz;
+    el.code.hidden = !!s.viz;
     el.bar.style.width = ((st.i + 1) / STEPS.length * 100) + "%";
     el.play.textContent = st.playing ? "থামাও" : "চালাও";
 
@@ -514,6 +732,7 @@ for s in snap2.compare_to(snap1, "lineno")[:5]:
       $(s.node).classList.add("active");
       $($(s.node).getAttribute("data-band")).classList.add("on");
       (s.also || []).forEach(function (id) { $(id).classList.add("touch"); });
+      if (s.viz) VIZ[s.viz]();
       schedule();
     }
 
@@ -538,7 +757,7 @@ for s in snap2.compare_to(snap1, "lineno")[:5]:
     st.timer = setTimeout(function () {
       if (st.i < STEPS.length - 1) go(st.i + 1, true);
       else { st.playing = false; el.play.textContent = "চালাও"; }
-    }, HOLD_MS);
+    }, STEPS[st.i].hold || HOLD_MS);
   }
 
   function go(i, animate) { st.i = i; paint(animate); }

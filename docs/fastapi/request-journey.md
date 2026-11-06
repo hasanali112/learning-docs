@@ -44,11 +44,11 @@ Rust backend থেকে একটা request এলে সেটা কোন 
 
 **ভেতরের ইঞ্জিন:**
 
-8. VM এর **eval loop** একটা একটা করে bytecode instruction চালায়।
-9. নতুন dict লাগলে **pymalloc** খালি block দেয়, সাধারণত kernel লাগে না।
-10. pymalloc এর block ফুরালে **`mmap()`** দিয়ে kernel এর কাছে বড় খণ্ড চায়।
-11. kernel শুধু virtual ঠিকানা দেয়, **page table** এ লেখে।
-12. প্রথমবার লেখার সময় **page fault** হয়, kernel আসল **RAM** page দেয়।
+8. VM এর **eval loop** প্রতিটা bytecode instruction পড়ে (fetch), চেনে (dispatch), তার C কোড চালায় (execute)। value stack এ জিনিস তোলে আর নামায়।
+9. নতুন dict লাগলে **pymalloc** তার pool এর free list থেকে একটা block দেয়, সাধারণত kernel লাগে না।
+10. সব pool ভরে গেলে **`mmap()`** দিয়ে kernel এর কাছে নতুন ১ MiB arena চায়।
+11. kernel শুধু virtual ঠিকানার পরিসর দেয়, process এর memory map এ লিখে রাখে। **page table** এ তখনো কোনো RAM বসানো নেই।
+12. প্রথমবার লেখার সময় **page fault** হয়, kernel একটা ৪ KiB **RAM** frame দিয়ে page table এ লেখে।
 13. data RAM থেকে **CPU cache** (৬৪ byte এর cache line) হয়ে CPU তে যায়।
 14. **CPU core** eval loop এর machine code চালায়। তারপর পরের instruction এর জন্য আবার একই চক্র।
 
