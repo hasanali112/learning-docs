@@ -60,9 +60,20 @@ h1 { font-family: var(--display); font-weight: 750; font-size: clamp(28px, 4.4vw
 .lede { margin: 0; color: var(--muted); }
 h2 { font-family: var(--display); font-weight: 650; font-size: 22px; margin: 0; text-wrap: balance; }
 
-.main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.main { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: start; }
 .diagram { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; overflow-x: auto; min-width: 0; }
-.diagram svg { display: block; width: 100%; min-width: 560px; height: auto; }
+.diagram svg { display: block; width: 100%; min-width: 500px; height: auto; }
+.node[role="button"] { cursor: pointer; }
+.node[role="button"]:hover .n-shape { stroke-width: 3; }
+.node:focus-visible { outline: none; }
+.node:focus-visible .n-shape { stroke-width: 4; }
+.zm { fill: var(--c); stroke: var(--surface); stroke-width: 2; }
+.zm-t { fill: var(--surface); font: 700 13px var(--mono); pointer-events: none; }
+.zoom-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 10px; border-top: 1px solid var(--line); }
+.zoom-row .vh { margin: 0 4px 0 0; }
+.ctl.sm { font-size: 13px; padding: 3px 10px; }
+.ctl.sm.on { border-color: var(--vm); color: var(--vm); background: color-mix(in srgb, var(--vm) 12%, var(--bg)); }
+.zoom-hint { margin: 0; width: 100%; font-size: 13px; color: var(--muted); }
 
 /* bands (layers) */
 .band { fill: color-mix(in srgb, var(--c) 4%, transparent); stroke: color-mix(in srgb, var(--c) 30%, transparent); stroke-width: 1; transition: fill .4s; }
@@ -159,7 +170,8 @@ pre { margin: 0; background: var(--code-bg); border-radius: 10px; padding: 12px 
 .req { align-self: flex-start; padding: 2px 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); }
 .arena { border: 1.5px solid var(--py); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
 .arena-h { color: var(--py); font-weight: 500; margin-bottom: 2px; }
-.pool { display: grid; grid-template-columns: 78px minmax(0, 1fr); align-items: center; gap: 8px; padding: 3px 4px; border-radius: 5px; transition: background .3s; }
+.pool > span:first-child { white-space: nowrap; }
+.pool { display: grid; grid-template-columns: 88px minmax(0, 1fr); align-items: center; gap: 8px; padding: 3px 4px; border-radius: 5px; transition: background .3s; }
 .pool.hl { background: color-mix(in srgb, var(--py) 16%, transparent); }
 .pool.full { background: color-mix(in srgb, var(--err) 14%, transparent); }
 .blocks { display: flex; flex-wrap: wrap; gap: 3px; }
@@ -337,6 +349,15 @@ pre { margin: 0; background: var(--code-bg); border-radius: 10px; padding: 12px 
         <button class="ctl" id="toReq" type="button">request অংশে যাও</button>
       </div>
       <div class="progress" aria-hidden="true"><span id="bar" style="width:4%"></span></div>
+      <div class="zoom-row">
+        <span class="vh">কাছ থেকে দেখো</span>
+        <button class="ctl sm" type="button" data-viz="eval">eval loop</button>
+        <button class="ctl sm" type="button" data-viz="pym">pymalloc</button>
+        <button class="ctl sm" type="button" data-viz="mmap">mmap</button>
+        <button class="ctl sm" type="button" data-viz="ptable">page table</button>
+        <button class="ctl sm" type="button" data-viz="fault">page fault</button>
+        <p class="zoom-hint">flowchart এর যেকোনো ঘরে click করলে সেই ধাপে যাবে। + চিহ্ন দেওয়া ঘরে ভেতরের animation আছে।</p>
+      </div>
     </div>
   </div>
 
@@ -494,6 +515,7 @@ for s in snap2.compare_to(snap1, "lineno")[:5]:
 
   // ---- কাছ থেকে দেখা: eval loop, pymalloc, mmap, page table, page fault ----
   var vizEl = $("viz");
+  var ZOOM_BTNS = Array.prototype.slice.call(document.querySelectorAll("[data-viz]"));
   var EV_MS = 1800;
   function later(ms, fn) { st.vt.push(setTimeout(fn, reduce ? 0 : ms)); }
   function clearViz() { st.vt.forEach(clearTimeout); st.vt = []; }
@@ -721,6 +743,7 @@ for s in snap2.compare_to(snap1, "lineno")[:5]:
     vizEl.innerHTML = "";
     vizEl.hidden = !s.viz;
     el.code.hidden = !!s.viz;
+    ZOOM_BTNS.forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-viz") === s.viz); });
     el.bar.style.width = ((st.i + 1) / STEPS.length * 100) + "%";
     el.play.textContent = st.playing ? "থামাও" : "চালাও";
 
@@ -761,6 +784,42 @@ for s in snap2.compare_to(snap1, "lineno")[:5]:
   }
 
   function go(i, animate) { st.i = i; paint(animate); }
+
+  // সরাসরি কোনো ধাপে যাওয়া: "কাছ থেকে দেখো" বোতাম আর flowchart এর ঘরে click
+  function stepOfViz(name) { for (var k = 0; k < STEPS.length; k++) if (STEPS[k].viz === name) return k; return -1; }
+  function stepOfNode(id) {
+    var j;
+    for (j = 0; j < STEPS.length; j++) if (STEPS[j].node === id && STEPS[j].viz && STEPS[j].k !== "ok") return j;
+    for (j = REQ_START; j < STEPS.length; j++) if (STEPS[j].node === id) return j;
+    for (j = 0; j < STEPS.length; j++) if (STEPS[j].node === id) return j;
+    return -1;
+  }
+  ZOOM_BTNS.forEach(function (b) {
+    b.addEventListener("click", function () { var k = stepOfViz(b.getAttribute("data-viz")); if (k >= 0) go(k, false); });
+  });
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  NODE_IDS.forEach(function (id) {
+    var k = stepOfNode(id);
+    if (k < 0) return;
+    var g = $(id);
+    g.setAttribute("role", "button");
+    g.setAttribute("tabindex", "0");
+    g.setAttribute("aria-label", STEPS[k].title);
+    g.addEventListener("click", function () { go(k, false); });
+    g.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(k, false); }
+    });
+    if (!STEPS[k].viz) return;
+    var r = g.querySelector(".n-shape");
+    var x = Number(r.getAttribute("x")) + Number(r.getAttribute("width")) - 4;
+    var y = Number(r.getAttribute("y")) + 4;
+    var c = document.createElementNS(SVG_NS, "circle");
+    c.setAttribute("class", "zm"); c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 9);
+    var t = document.createElementNS(SVG_NS, "text");
+    t.setAttribute("class", "zm-t"); t.setAttribute("x", x); t.setAttribute("y", y + 4.5); t.setAttribute("text-anchor", "middle");
+    t.textContent = "+";
+    g.appendChild(c); g.appendChild(t);
+  });
 
   $("prev").addEventListener("click", function () { if (st.i > 0) go(st.i - 1, false); });
   $("next").addEventListener("click", function () { if (st.i < STEPS.length - 1) go(st.i + 1, true); });
