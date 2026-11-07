@@ -8,7 +8,7 @@ hero:
   actions:
     - theme: brand
       text: নোট পড়া শুরু করো
-      link: /start/intro
+      link: /python/bytecode
 
 features:
   - title: নিজের ভাষায় লেখা

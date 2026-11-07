@@ -5,28 +5,30 @@ import type { DefaultTheme } from 'vitepress'
 // উদাহরণ: docs/fastapi/setup.md  →  link: '/fastapi/setup'
 export const sidebar: DefaultTheme.SidebarItem[] = [
   {
-    text: 'শুরু',
+    text: 'Python',
     collapsed: false,
     items: [
-      { text: 'এই সাইট সম্পর্কে', link: '/start/intro' },
-      { text: 'নতুন নোট কীভাবে লিখবো', link: '/start/how-to-write' },
-    ],
-  },
-  {
-    text: 'FastAPI',
-    collapsed: false,
-    items: [
-      { text: 'Setup আর venv', link: '/fastapi/setup' },
-      { text: 'uvicorn, Starlette, Pydantic', link: '/fastapi/core-parts' },
-      { text: 'একটা request এর পুরো যাত্রা', link: '/fastapi/request-journey' },
-    ],
-  },
-  {
-    text: 'Python এর ভেতরের কথা',
-    collapsed: false,
-    items: [
-      { text: 'Bytecode আর compile', link: '/python/bytecode' },
-      { text: 'Memory: stack, heap আর leak', link: '/python/memory' },
+      {
+        text: 'Python Fundamentals',
+        collapsed: false,
+        items: [
+          { text: 'Bytecode আর compile', link: '/python/bytecode' },
+          { text: 'Memory: stack, heap আর leak', link: '/python/memory' },
+        ],
+      },
+      {
+        text: 'FastAPI Fundamentals',
+        collapsed: false,
+        items: [
+          { text: 'uvicorn, Starlette, Pydantic', link: '/fastapi/core-parts' },
+          { text: 'একটা request এর পুরো যাত্রা', link: '/fastapi/request-journey' },
+        ],
+      },
+      {
+        text: 'FastAPI',
+        collapsed: false,
+        items: [{ text: 'Setup আর venv', link: '/fastapi/setup' }],
+      },
     ],
   },
 ]
