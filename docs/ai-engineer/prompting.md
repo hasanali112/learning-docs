@@ -192,4 +192,4 @@ Model জানে না "order" এ কী কী থাকে, তথ্য �
 - কাস্টমারের লেখা কখনো নির্দেশ না, শুধু তথ্য।
 - Prompt বদলাও মেপে, test set দিয়ে।
 
-আগের নোট: [LLM এর মূল ধারণা](/ai-engineer/llm-basics) · পরের নোট: [Structured Output](/ai-engineer/structured-output)
+আগের নোট: [Fine-tuning](/ai-engineer/fine-tuning) · পরের নোট: [Inference Engineering](/ai-engineer/inference-engineering)

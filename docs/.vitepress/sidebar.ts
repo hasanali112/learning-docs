@@ -35,10 +35,34 @@ export const sidebar: DefaultTheme.SidebarItem[] = [
     text: 'AI Engineer',
     collapsed: false,
     items: [
-      { text: 'LLM এর মূল ধারণা', link: '/ai-engineer/llm-basics' },
-      { text: 'Prompt লেখা', link: '/ai-engineer/prompting' },
-      { text: 'Structured Output', link: '/ai-engineer/structured-output' },
-      { text: 'LangChain এর মূল অংশ', link: '/ai-engineer/langchain-basics' },
+      {
+        // roadmap: Working With LLMs → How LLMs Work → Common Terminology
+        text: 'How LLMs Work',
+        collapsed: false,
+        items: [
+          { text: 'AI vs AGI', link: '/ai-engineer/ai-vs-agi' },
+          { text: 'Large Language Model (LLM)', link: '/ai-engineer/llm-basics' },
+          { text: 'Embeddings', link: '/ai-engineer/embeddings' },
+          { text: 'Training', link: '/ai-engineer/training' },
+          { text: 'Inference', link: '/ai-engineer/inference' },
+          { text: 'Vector DBs', link: '/ai-engineer/vector-dbs' },
+          { text: 'AI Agents', link: '/ai-engineer/ai-agents' },
+          { text: 'RAG', link: '/ai-engineer/rag' },
+          { text: 'Context Window', link: '/ai-engineer/context-window' },
+          { text: 'Fine-tuning', link: '/ai-engineer/fine-tuning' },
+          { text: 'Prompt Engineering', link: '/ai-engineer/prompting' },
+          { text: 'Inference Engineering', link: '/ai-engineer/inference-engineering' },
+          { text: 'Context Engineering', link: '/ai-engineer/context-engineering' },
+        ],
+      },
+      {
+        text: 'Building with LLMs',
+        collapsed: false,
+        items: [
+          { text: 'Structured Output', link: '/ai-engineer/structured-output' },
+          { text: 'LangChain এর মূল অংশ', link: '/ai-engineer/langchain-basics' },
+        ],
+      },
     ],
   },
   {
