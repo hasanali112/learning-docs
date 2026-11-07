@@ -86,8 +86,3 @@ uvicorn **আসা** request নেয়। কিন্তু তোমার
 | **Pydantic** | চেকপোস্ট: data ঠিক আছে কিনা |
 | **FastAPI** | সবগুলোকে জুড়ে দেওয়া framework, সাথে `/docs` পেজ |
 | **httpx** | নিজে অন্য কোথাও request পাঠানোর tool |
-
-::: details আমি প্রথমে যা ভুল বুঝেছিলাম
-- ভেবেছিলাম Starlette request **পাঠায়**। আসলে Starlette app এর ভেতরে আসা request **সামলায়**। পাঠানোর কাজ httpx এর।
-- ভেবেছিলাম uvicorn নিজেই port। আসলে uvicorn একটা program, যেটা port এ বসে থাকে।
-:::
