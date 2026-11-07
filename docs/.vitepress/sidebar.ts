@@ -32,6 +32,16 @@ export const sidebar: DefaultTheme.SidebarItem[] = [
     ],
   },
   {
+    text: 'AI Engineer',
+    collapsed: false,
+    items: [
+      { text: 'LLM এর মূল ধারণা', link: '/ai-engineer/llm-basics' },
+      { text: 'Prompt লেখা', link: '/ai-engineer/prompting' },
+      { text: 'Structured Output', link: '/ai-engineer/structured-output' },
+      { text: 'LangChain এর মূল অংশ', link: '/ai-engineer/langchain-basics' },
+    ],
+  },
+  {
     text: 'Software Architecture ও Design Patterns',
     collapsed: false,
     items: [
