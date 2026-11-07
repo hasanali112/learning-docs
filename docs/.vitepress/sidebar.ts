@@ -31,4 +31,38 @@ export const sidebar: DefaultTheme.SidebarItem[] = [
       },
     ],
   },
+  {
+    text: 'Software Architecture ও Design Patterns',
+    collapsed: false,
+    items: [
+      { text: 'Architecture vs Design Pattern', link: '/architecture/architecture-vs-pattern' },
+      {
+        text: 'Software Architecture',
+        collapsed: false,
+        items: [
+          { text: 'Monolith, Modular Monolith, Microservices', link: '/architecture/monolith-microservices' },
+          { text: 'Layered আর Hexagonal', link: '/architecture/layered-hexagonal' },
+          { text: 'Event-Driven Architecture', link: '/architecture/event-driven' },
+        ],
+      },
+      {
+        text: 'Design Patterns',
+        collapsed: false,
+        items: [
+          { text: 'শুরু: তিন ধরনের pattern', link: '/design-patterns/overview' },
+          { text: 'Singleton', link: '/design-patterns/singleton' },
+          { text: 'Factory', link: '/design-patterns/factory' },
+          { text: 'Builder', link: '/design-patterns/builder' },
+          { text: 'Adapter', link: '/design-patterns/adapter' },
+          { text: 'Decorator', link: '/design-patterns/decorator' },
+          { text: 'Facade', link: '/design-patterns/facade' },
+          { text: 'Strategy', link: '/design-patterns/strategy' },
+          { text: 'Observer', link: '/design-patterns/observer' },
+          { text: 'Chain of Responsibility', link: '/design-patterns/chain-of-responsibility' },
+          { text: 'Observer vs Pub/Sub', link: '/design-patterns/observer-vs-pubsub' },
+          { text: 'FastAPI এর ভেতরের pattern', link: '/design-patterns/fastapi-patterns' },
+        ],
+      },
+    ],
+  },
 ]
