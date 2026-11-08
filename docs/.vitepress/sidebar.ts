@@ -42,6 +42,25 @@ export const sidebar: DefaultTheme.SidebarItem[] = [
         items: [
           { text: 'AI vs AGI', link: '/ai-engineer/ai-vs-agi' },
           { text: 'Large Language Model (LLM)', link: '/ai-engineer/llm-basics' },
+          {
+            text: 'Core LLM Elements',
+            collapsed: false,
+            items: [
+              { text: 'Tokens', link: '/ai-engineer/llm-basics#token' },
+              { text: 'Context', link: '/ai-engineer/context-window' },
+              {
+                text: 'Sampling Parameters',
+                link: '/ai-engineer/sampling-parameters',
+                collapsed: false,
+                items: [
+                  { text: 'Temperature', link: '/ai-engineer/sampling-parameters#temperature' },
+                  { text: 'Top-K', link: '/ai-engineer/sampling-parameters#top-k' },
+                  { text: 'Top-P', link: '/ai-engineer/sampling-parameters#top-p' },
+                  { text: 'Repetition Penalties', link: '/ai-engineer/sampling-parameters#repetition-penalties' },
+                ],
+              },
+            ],
+          },
           { text: 'Embeddings', link: '/ai-engineer/embeddings' },
           { text: 'Training', link: '/ai-engineer/training' },
           { text: 'Inference', link: '/ai-engineer/inference' },

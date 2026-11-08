@@ -184,6 +184,8 @@ Model পরের token বাছার সময় কতটা "ঝুঁক
 
 আমাদের প্রথম কাজ (মেসেজ থেকে order এর ফর্ম পূরণ) এ temperature কম রাখব, কারণ একই মেসেজে প্রতিবার একই ফর্ম চাই। তবে মনে রাখো, temperature ০ হলেও প্রতিবার হুবহু একই উত্তরের নিশ্চয়তা নেই।
 
+Temperature, Top-K, Top-P আর Repetition Penalty বিস্তারিত: [Sampling Parameters](/ai-engineer/sampling-parameters)।
+
 ## LLM কিছু মনে রাখে না
 
 **প্রতিটা API call সম্পূর্ণ নতুন।** আগের call এ কী কথা হয়েছে, model তা জানে না। ChatGPT তে কথোপকথন মনে থাকে বলে মনে হয়, কারণ ChatGPT এর app প্রতিবার আগের সব কথা আবার পাঠায়।
@@ -205,4 +207,4 @@ Model পরের token বাছার সময় কতটা "ঝুঁক
 | Temperature | ফর্ম পূরণে কম |
 | Stateless | প্রতিটা কাস্টমারের কথোপকথন নিজেরা জমা রাখা |
 
-আগের নোট: [AI vs AGI](/ai-engineer/ai-vs-agi) · পরের নোট: [Embeddings](/ai-engineer/embeddings)
+আগের নোট: [AI vs AGI](/ai-engineer/ai-vs-agi) · পরের নোট: [Sampling Parameters](/ai-engineer/sampling-parameters)
