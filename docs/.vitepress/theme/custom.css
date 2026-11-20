@@ -82,3 +82,28 @@
   color: var(--vp-c-text-1);
   font-weight: 500;
 }
+
+/* sidebar লুকানো অবস্থা (SidebarToggle বাটন html এ sidebar-collapsed class দেয়) */
+@media (min-width: 960px) {
+  .VPSidebar {
+    transition: transform 0.25s ease, opacity 0.25s ease, visibility 0.25s;
+  }
+
+  .sidebar-collapsed .VPSidebar {
+    transform: translateX(-100%);
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .sidebar-collapsed .VPContent.has-sidebar,
+  .sidebar-collapsed .VPLocalNav.has-sidebar {
+    padding-left: 0;
+  }
+}
+
+@media (min-width: 1440px) {
+  .sidebar-collapsed .VPContent.has-sidebar,
+  .sidebar-collapsed .VPLocalNav.has-sidebar {
+    padding-left: calc((100vw - var(--vp-layout-max-width)) / 2);
+  }
+}
