@@ -107,3 +107,53 @@
     padding-left: calc((100vw - var(--vp-layout-max-width)) / 2);
   }
 }
+
+/* ── মোবাইলে পড়ার সুবিধা ── */
+@media (max-width: 640px) {
+  /* লেখা একটু ছোট, তবে আরামদায়ক লাইনের ফাঁক */
+  .vp-doc p,
+  .vp-doc li {
+    font-size: 16px;
+    line-height: 1.8;
+  }
+
+  .vp-doc h1 {
+    font-size: 26px;
+  }
+
+  .vp-doc h2 {
+    font-size: 21px;
+  }
+
+  /* code block: লাইন নম্বর লুকিয়ে কোডকে পুরো চওড়া জায়গা দেওয়া */
+  .vp-doc div[class*='language-'].line-numbers-mode {
+    padding-left: 0;
+  }
+
+  .vp-doc .line-numbers-wrapper {
+    display: none;
+  }
+
+  .vp-doc div[class*='language-'] code {
+    font-size: 13px;
+  }
+
+  /* টেবিল: কম padding, যাতে বেশি অংশ একসাথে দেখা যায় */
+  .vp-doc th,
+  .vp-doc td {
+    padding: 8px 10px;
+    font-size: 13.5px;
+  }
+
+  /* টেবিলের ভেতরের লম্বা inline code ভেঙে পরের লাইনে যাবে */
+  .vp-doc td code,
+  .vp-doc th code {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  /* টিপ / সতর্কতার বাক্সে কম padding */
+  .vp-doc .custom-block {
+    padding: 12px 14px 4px;
+  }
+}
