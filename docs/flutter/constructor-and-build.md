@@ -41,6 +41,97 @@ const buildFlow = {
     },
   ],
 }
+
+const keyPathFlow = {
+  title: 'key কোথা থেকে কোথায় যায় (super.key)',
+  nodes: [
+    { id: 'you', label: 'তুমি', sub: 'ValueKey(id)' },
+    { id: 'mine', label: 'TodoItem', sub: 'super.key' },
+    { id: 'sl', label: 'StatelessWidget', sub: 'super.key' },
+    { id: 'w', label: 'Widget', sub: 'final Key? key' },
+    { id: 'fl', label: 'Flutter', sub: 'key পড়ে' },
+  ],
+  steps: [
+    {
+      node: 'you',
+      title: '১. key দাও তুমি, ব্যবহারের সময়',
+      text: 'Flutter নিজে key বানায় না। list বানানোর সময় তুমি id দিয়ে key দাও, ঠিক React এর map এ key={todo.id} এর মতো।',
+      code: 'TodoItem(key: ValueKey(todo.id), todo: todo)',
+    },
+    {
+      node: 'mine', edge: 0,
+      title: '২. তোমার widget এ শুধু একটা খালি ঘর',
+      text: 'constructor এর super.key কোনো key বানায় না। এটা শুধু বলে "কেউ key দিলে নেবো, আর সোজা parent কে দিয়ে দেবো"।',
+      code: 'const TodoItem({super.key, required this.todo});',
+    },
+    {
+      node: 'sl', edge: 1,
+      title: '৩. parent ও একই কাজ করে',
+      text: 'StatelessWidget নিজেও key রাখে না, সেও super.key দিয়ে আরও উপরে পাঠিয়ে দেয়।',
+      code: 'const StatelessWidget({super.key});',
+    },
+    {
+      node: 'w', edge: 2,
+      title: '৪. সবার উপরে Widget এ key জমা থাকে',
+      text: 'আসল ঘর এখানে। সব widget এর key শেষে এই একটা field এ জমা হয়। key না দিলে এখানে null থাকে।',
+      code: 'abstract class Widget {\n  const Widget({this.key});\n  final Key? key;\n}',
+    },
+    {
+      node: 'fl', edge: 3,
+      title: '৫. Flutter এই key পড়ে চেনে',
+      text: 'screen আবার আঁকার সময় Flutter প্রতিটা widget এর key দেখে বোঝে কোনটা কে। key null হলে চেনে শুধু জায়গা দিয়ে।',
+      code: 'widget.key  // ValueKey(2) অথবা null',
+    },
+  ],
+}
+
+const keyMatchFlow = {
+  title: 'list থেকে একটা মুছলে Flutter কীভাবে মেলায়',
+  nodes: [
+    { id: 'old', label: 'আগের list', sub: '৩টা item' },
+    { id: 'del', label: 'একটা মুছলো', sub: 'প্রথমটা' },
+    { id: 'match', label: 'Flutter মেলায়', sub: 'কে কোনটা?' },
+    { id: 'res', label: 'ফলাফল', sub: 'screen এ' },
+  ],
+  steps: [
+    {
+      node: 'old',
+      title: '১. শুরুতে: প্রতিটার পাশে checkbox',
+      text: 'টিক আছে কি নেই, সেটা প্রতিটা item widget এর ভেতরের state এ থাকে।',
+      code: 'জায়গা ১: ☑ বাজার করা\nজায়গা ২: ☐ রান্না করা\nজায়গা ৩: ☐ পড়াশোনা',
+    },
+    {
+      node: 'del', edge: 0,
+      title: '২. "বাজার করা" মুছে ফেলা হলো',
+      text: 'বাকি দুইটা এক ঘর করে উপরে উঠে আসে।',
+      code: 'জায়গা ১: রান্না করা\nজায়গা ২: পড়াশোনা',
+    },
+    {
+      node: 'match', edge: 1,
+      title: '৩. key ছাড়া: Flutter চেনে জায়গা দিয়ে',
+      text: 'বেঞ্চ নম্বর দিয়ে চেনা শিক্ষকের মতো। Flutter ভাবে "জায়গা ১ এর widget তো এখনো আছে, শুধু লেখা বদলেছে"। তাই জায়গা ১ এর পুরনো state (টিক) সেখানেই থেকে যায়।',
+      code: 'জায়গা ১ এর state (☑) → জায়গা ১ এ',
+    },
+    {
+      node: 'res', edge: 2,
+      title: '৪. ভুল! টিক চলে গেল অন্য কাজে',
+      text: '"রান্না করা" তে কেউ টিক দেয়নি, তবুও টিক দেখাচ্ছে।',
+      code: '☑ রান্না করা   ← ❌ ভুল\n☐ পড়াশোনা',
+    },
+    {
+      node: 'match', edge: 2, reverse: true,
+      title: '৫. এবার key দিয়ে: Flutter চেনে নাম-ট্যাগ দিয়ে',
+      text: 'প্রতিটা item এ ValueKey(todo.id) দেওয়া। Flutter জায়গা না দেখে key দেখে: "id 1 নেই, ওর state মুছে দাও। id 2 আর id 3 আছে, ওদের state ওদের সাথেই যাক"।',
+      code: 'key 1 (☑) → মুছে গেছে\nkey 2 (☐) → রান্না করা\nkey 3 (☐) → পড়াশোনা',
+    },
+    {
+      node: 'res', edge: 2,
+      title: '৬. ঠিক! প্রত্যেকের state নিজের সাথে',
+      text: 'জায়গা বদলালেও কোনো ভুল হয় না। এটাই key এর পুরো কাজ।',
+      code: '☐ রান্না করা   ← ✅ ঠিক\n☐ পড়াশোনা',
+    },
+  ],
+}
 </script>
 
 # Constructor আর build(): TypeScript এর সাথে মিলিয়ে
@@ -239,7 +330,46 @@ const ProductCard({Key? key, required this.name}) : super(key: key);   // লম
 const ProductCard({super.key, required this.name});                     // ছোট, একই কাজ
 ```
 
-**`key` কী কাজে লাগে?** List এ অনেকগুলো একই রকম widget থাকলে, কোনটা কোনটা, Flutter `key` দিয়ে চেনে। React এর list এ `key` prop এর মতো। বেশিরভাগ সময় তুমি নিজে key দেবে না, শুধু `super.key` লিখে রাখবে।
+#### `super.key` = খালি ঘর, `ValueKey(id)` = আসল key
+
+constructor এ `super.key` লিখলে **কোনো key তৈরি হয় না**, Flutter ও নিজে key বসায় না। এটা শুধু একটা খালি ঘর। আসল key দাও **তুমি**, widget ব্যবহারের সময়:
+
+```dart
+// ১. widget বানানোর সময়: শুধু ঘর রাখা
+const TodoItem({super.key, required this.todo});
+
+// ২. ব্যবহারের সময়: তুমি id দিয়ে key দাও
+for (final todo in todos)
+  TodoItem(key: ValueKey(todo.id), todo: todo)
+```
+
+```tsx
+// React এ একই জিনিস: key দাও map করার সময়
+todos.map(todo => <TodoItem key={todo.id} todo={todo} />)
+```
+
+<FlowSteps v-bind="keyPathFlow" />
+
+#### Key আসলে কী করে: নাম-ট্যাগ
+
+ক্লাসে শিক্ষক যদি student চেনেন **বেঞ্চ নম্বর দিয়ে**, তাহলে কেউ চলে গেলে আর বাকিরা সরে বসলে তিনি গুলিয়ে ফেলেন। কিন্তু প্রত্যেকের গায়ে **নাম-ট্যাগ** থাকলে আর ভুল হয় না।
+
+Key না থাকলে Flutter widget চেনে জায়গা দিয়ে (বেঞ্চ নম্বর)। Key থাকলে চেনে key দিয়ে (নাম-ট্যাগ)।
+
+<FlowSteps v-bind="keyMatchFlow" />
+
+#### কখন কী লিখবে
+
+| | কী করবে |
+|---|---|
+| প্রতিটা widget class এর constructor | **সবসময়** `super.key` লেখো। না লিখলে VS Code হলুদ দাগ দিয়ে সতর্ক করে |
+| `State` class (`_CounterState`) | লাগে না, ওটা widget না |
+| List এর item, যেগুলো মোছা হয় বা জায়গা বদলায়, আর ভেতরে state আছে | ব্যবহারের সময় `key: ValueKey(item.id)` দাও |
+| বাকি সব জায়গা | key দেওয়ার দরকার নেই |
+
+::: tip টাইপ করতে হয় না
+VS Code এ `stless` লিখে Enter চাপলে `super.key` সহ পুরো StatelessWidget তৈরি হয়ে যায়। StatefulWidget এর জন্য `stful`।
+:::
 
 ### ১.৭ পুরো widget constructor, এক নজরে
 
