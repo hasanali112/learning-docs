@@ -14,6 +14,7 @@ export const sidebar: DefaultTheme.SidebarItem[] = [
     collapsed: false,
     items: [
       { text: 'Widget আর StatelessWidget', link: '/flutter/widgets-basics' },
+      { text: 'Constructor আর build(): TS তুলনা', link: '/flutter/constructor-and-build' },
       { text: 'App Architecture: MVVM', link: '/flutter/app-architecture' },
     ],
   },
