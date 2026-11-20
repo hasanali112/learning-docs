@@ -12,7 +12,10 @@ export const sidebar: DefaultTheme.SidebarItem[] = [
   {
     text: 'Flutter',
     collapsed: false,
-    items: [{ text: 'App Architecture: MVVM', link: '/flutter/app-architecture' }],
+    items: [
+      { text: 'Widget আর StatelessWidget', link: '/flutter/widgets-basics' },
+      { text: 'App Architecture: MVVM', link: '/flutter/app-architecture' },
+    ],
   },
   {
     text: 'Python',
