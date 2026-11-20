@@ -1,19 +1,19 @@
 <script setup>
 const loadFlow = {
-  title: 'Scholarship list লোড হওয়ার পুরো যাত্রা',
+  title: 'একটা list লোড হওয়ার পুরো যাত্রা',
   nodes: [
     { id: 'view', label: 'View', sub: 'Screen widget' },
     { id: 'vm', label: 'ViewModel', sub: 'UI state' },
     { id: 'repo', label: 'Repository', sub: 'source of truth' },
     { id: 'svc', label: 'Service', sub: 'ApiClient' },
-    { id: 'api', label: 'FastAPI', sub: 'backend' },
+    { id: 'api', label: 'Backend API', sub: 'server' },
   ],
   steps: [
     {
       node: 'view',
       title: '১. Screen খোলে',
-      text: 'User scholarship list screen এ ঢুকলো। View নিজে কিছু হিসাব করে না, শুধু ViewModel কে বলে "লোড করো"।',
-      code: 'ScholarshipListScreen খুললো',
+      text: 'User product list screen এ ঢুকলো। View নিজে কিছু হিসাব করে না, শুধু ViewModel কে বলে "লোড করো"।',
+      code: 'ProductListScreen খুললো',
     },
     {
       node: 'vm', edge: 0,
@@ -25,43 +25,43 @@ const loadFlow = {
       node: 'repo', edge: 1,
       title: '৩. Repository data আনতে যায়',
       text: 'ViewModel জানে না data কোথা থেকে আসে (API, cache, নাকি fake)। এটা শুধু repository জানে।',
-      code: 'repository.getScholarships()',
+      code: 'repository.getProducts()',
     },
     {
       node: 'svc', edge: 2,
       title: '৪. Service HTTP call করে',
       text: 'Service হলো সবচেয়ে নিচের layer। শুধু endpoint call করে, কোনো state রাখে না।',
-      code: 'GET /api/scholarships',
+      code: 'GET /api/products',
     },
     {
       node: 'api', edge: 3,
-      title: '৫. FastAPI উত্তর দেয়',
-      text: 'আসল business logic (filter, AI matching) সব backend এ। Flutter শুধু ফলাফল নেয়।',
-      code: '[{"id": 1, "title": "...", "funding_type": "full"}]',
+      title: '৫. Backend উত্তর দেয়',
+      text: 'Server JSON পাঠায়। backend যেকোনো ভাষায় লেখা হতে পারে, Flutter এর তাতে কিছু যায় আসে না।',
+      code: '[{"id": 1, "name": "...", "in_stock": true}]',
     },
     {
       node: 'svc', edge: 3, reverse: true,
       title: '৬. Raw JSON ফেরত আসে',
-      text: 'Service JSON টা API model এ বদলে উপরে পাঠায়।',
-      code: 'List<ScholarshipApiModel>',
+      text: 'Service JSON টা উপরে পাঠায়।',
+      code: 'List<Map<String, dynamic>>',
     },
     {
       node: 'repo', edge: 2, reverse: true,
       title: '৭. Repository app model বানায়',
-      text: 'API এর নাম (funding_type) app এর নিজের model এ (FundingType.full) বদলে যায়। API বদলালে শুধু এখানেই বদলাতে হবে।',
-      code: 'List<Scholarship>',
+      text: 'API এর নাম (in_stock) app এর নিজের model এ (inStock) বদলে যায়। API বদলালে শুধু এখানেই বদলাতে হবে।',
+      code: 'List<Product>',
     },
     {
       node: 'vm', edge: 1, reverse: true,
       title: '৮. ViewModel নতুন state দেয়',
       text: 'list রেখে loading বন্ধ করে, তারপর notifyListeners() দিয়ে জানিয়ে দেয়।',
-      code: 'scholarships = [...]\nisLoading = false\nnotifyListeners()',
+      code: 'products = [...]\nisLoading = false\nnotifyListeners()',
     },
     {
       node: 'view', edge: 0, reverse: true,
       title: '৯. View আবার আঁকে',
       text: 'View শুধু state দেখে UI বানায়। data নিচ থেকে উপরে একদিকেই এলো, এটাই unidirectional data flow।',
-      code: 'ListView এ ৫টা scholarship',
+      code: 'ListView এ ১০টা product',
     },
   ],
 }
@@ -69,7 +69,7 @@ const loadFlow = {
 
 # Flutter App Architecture: MVVM
 
-Flutter app কে কীভাবে সাজালে বড় হলেও গুলিয়ে যায় না? Flutter এর official docs যেটা বলে, সেটাই এখানে। উদাহরণ: scholarship app, যেখানে backend হলো FastAPI আর Flutter শুধু client।
+Flutter app কে কীভাবে সাজালে বড় হলেও গুলিয়ে যায় না? Flutter এর official docs যেটা বলে, সেটাই এখানে।
 
 ## মূল ভাবনা: দুইটা layer
 
@@ -81,7 +81,7 @@ Flutter docs বলে app কে দুই ভাগে ভাগ করো: **
 └────────────────────────────┬───────────┘
                              │
 ┌─────────────── Data layer ─┴───────────┐
-│  Repository   ◀──▶   Service           │──▶ FastAPI
+│  Repository   ◀──▶   Service           │──▶ API / DB / device
 └────────────────────────────────────────┘
 ```
 
@@ -90,12 +90,12 @@ Flutter docs বলে app কে দুই ভাগে ভাগ করো: **
 | **View** | UI আঁকে, user এর tap ধরে ViewModel কে জানায় | কোনো business logic, কোনো API call |
 | **ViewModel** | app data কে **UI state** এ বদলায় (loading, error, list) | widget বা `BuildContext` ধরবে না |
 | **Repository** | model data এর **source of truth**, raw data থেকে model বানায় | UI নিয়ে কিছু জানবে না, অন্য repository কেও জানবে না |
-| **Service** | API endpoint wrap করে, `Future` / `Stream` ফেরত দেয় | কোনো state রাখবে না |
+| **Service** | API endpoint, local DB বা platform API wrap করে, `Future` / `Stream` ফেরত দেয় | কোনো state রাখবে না |
 
 **View আর ViewModel এর সম্পর্ক এক-এক।** প্রতিটা screen এর নিজের একটা ViewModel থাকে।
 
 ::: tip Domain layer লাগবে?
-Docs এ use-case (domain layer) **ঐচ্ছিক**, শুধু খুব জটিল logic থাকলে লাগে। আমাদের জটিল logic (matching, filter) সব FastAPI তে, তাই Flutter এ এটা লাগবে না।
+Docs এ use-case (domain layer) **ঐচ্ছিক**। অনেকগুলো repository মিলিয়ে জটিল logic থাকলে, বা একই logic অনেক ViewModel এ লাগলে তখন যোগ করো। শুরুতে লাগে না।
 :::
 
 ## একটা request এর পুরো যাত্রা
@@ -114,17 +114,17 @@ lib/
 ├── utils/
 ├── ui/                       ← feature ধরে
 │   ├── core/                 ← সবার ব্যবহারের widget, theme
-│   ├── scholarship_list/
-│   │   ├── view_models/scholarship_list_view_model.dart
-│   │   └── widgets/scholarship_list_screen.dart
-│   ├── profile/
-│   └── matching/
+│   ├── product_list/
+│   │   ├── view_models/product_list_view_model.dart
+│   │   └── widgets/product_list_screen.dart
+│   ├── cart/
+│   └── profile/
 ├── domain/
-│   └── models/scholarship.dart        ← app এর নিজের model
+│   └── models/product.dart            ← app এর নিজের model
 └── data/                     ← type ধরে
     ├── services/api_client.dart       ← সব HTTP call
-    ├── repositories/scholarship_repository.dart
-    └── model/scholarship_api_model.dart   ← FastAPI এর JSON আকার
+    ├── repositories/product_repository.dart
+    └── model/product_api_model.dart   ← API এর JSON আকার
 ```
 
 **কেন এভাবে?** প্রতিটা feature এর ঠিক একটা view আর একটা view model থাকে, তাই সেগুলো feature এর ফোল্ডারে একসাথে রাখা যায়। কিন্তু একটা repository অনেকগুলো feature ব্যবহার করে, তাই ওগুলো type অনুযায়ী আলাদা ফোল্ডারে থাকে।
@@ -134,15 +134,13 @@ lib/
 ### Model: immutable
 
 ```dart
-// lib/domain/models/scholarship.dart
-enum FundingType { full, partial, tuitionWaiver }
-
-class Scholarship {
-  const Scholarship({required this.id, required this.title, required this.funding});
+// lib/domain/models/product.dart
+class Product {
+  const Product({required this.id, required this.name, required this.inStock});
 
   final int id;
-  final String title;
-  final FundingType funding;
+  final String name;
+  final bool inStock;
 }
 ```
 
@@ -156,8 +154,8 @@ class ApiClient {
   ApiClient(this.baseUrl);
   final String baseUrl;
 
-  Future<List<Map<String, dynamic>>> getScholarships() async {
-    final res = await http.get(Uri.parse('$baseUrl/api/scholarships'));
+  Future<List<Map<String, dynamic>>> getProducts() async {
+    final res = await http.get(Uri.parse('$baseUrl/api/products'));
     if (res.statusCode != 200) throw Exception('লোড হয়নি: ${res.statusCode}');
     return (jsonDecode(res.body) as List).cast<Map<String, dynamic>>();
   }
@@ -167,45 +165,41 @@ class ApiClient {
 ### Repository: abstract + আসল implementation
 
 ```dart
-// lib/data/repositories/scholarship_repository.dart
-abstract class ScholarshipRepository {
-  Future<List<Scholarship>> getScholarships();
+// lib/data/repositories/product_repository.dart
+abstract class ProductRepository {
+  Future<List<Product>> getProducts();
 }
 
-class RemoteScholarshipRepository implements ScholarshipRepository {
-  RemoteScholarshipRepository(this._api);
+class RemoteProductRepository implements ProductRepository {
+  RemoteProductRepository(this._api);
   final ApiClient _api;
 
   @override
-  Future<List<Scholarship>> getScholarships() async {
-    final raw = await _api.getScholarships();
+  Future<List<Product>> getProducts() async {
+    final raw = await _api.getProducts();
     return raw.map(_toModel).toList();
   }
 
-  // API এর নাম → app এর model। FastAPI বদলালে শুধু এখানে হাত দিতে হবে
-  Scholarship _toModel(Map<String, dynamic> j) => Scholarship(
+  // API এর নাম → app এর model। API বদলালে শুধু এখানে হাত দিতে হবে
+  Product _toModel(Map<String, dynamic> j) => Product(
         id: j['id'],
-        title: j['title'],
-        funding: switch (j['funding_type']) {
-          'full' => FundingType.full,
-          'partial' => FundingType.partial,
-          _ => FundingType.tuitionWaiver,
-        },
+        name: j['name'],
+        inStock: j['in_stock'] ?? false,
       );
 }
 ```
 
-Abstract class রাখার লাভ হলো টেস্টের সময় `FakeScholarshipRepository` বসিয়ে দেওয়া যায়, আসল API call করা লাগে না।
+Abstract class রাখার লাভ হলো টেস্টের সময় `FakeProductRepository` বসিয়ে দেওয়া যায়, আসল API call করা লাগে না।
 
 ### ViewModel: UI state
 
 ```dart
-// lib/ui/scholarship_list/view_models/scholarship_list_view_model.dart
-class ScholarshipListViewModel extends ChangeNotifier {
-  ScholarshipListViewModel(this._repo);
-  final ScholarshipRepository _repo;
+// lib/ui/product_list/view_models/product_list_view_model.dart
+class ProductListViewModel extends ChangeNotifier {
+  ProductListViewModel(this._repo);
+  final ProductRepository _repo;
 
-  List<Scholarship> scholarships = [];
+  List<Product> products = [];
   bool isLoading = false;
   String? error;
 
@@ -214,7 +208,7 @@ class ScholarshipListViewModel extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
-      scholarships = await _repo.getScholarships();
+      products = await _repo.getProducts();
     } catch (e) {
       error = 'লোড করা যায়নি';
     } finally {
@@ -228,10 +222,10 @@ class ScholarshipListViewModel extends ChangeNotifier {
 ### View: শুধু state দেখে আঁকে
 
 ```dart
-// lib/ui/scholarship_list/widgets/scholarship_list_screen.dart
-class ScholarshipListScreen extends StatelessWidget {
-  const ScholarshipListScreen({super.key, required this.viewModel});
-  final ScholarshipListViewModel viewModel;
+// lib/ui/product_list/widgets/product_list_screen.dart
+class ProductListScreen extends StatelessWidget {
+  const ProductListScreen({super.key, required this.viewModel});
+  final ProductListViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
@@ -241,7 +235,7 @@ class ScholarshipListScreen extends StatelessWidget {
         if (viewModel.isLoading) return const Center(child: CircularProgressIndicator());
         if (viewModel.error != null) return Center(child: Text(viewModel.error!));
         return ListView(
-          children: [for (final s in viewModel.scholarships) ListTile(title: Text(s.title))],
+          children: [for (final p in viewModel.products) ListTile(title: Text(p.name))],
         );
       },
     );
@@ -257,8 +251,8 @@ void main() {
     MultiProvider(
       providers: [
         Provider(create: (_) => ApiClient('https://api.example.com')),
-        Provider<ScholarshipRepository>(
-          create: (c) => RemoteScholarshipRepository(c.read<ApiClient>()),
+        Provider<ProductRepository>(
+          create: (c) => RemoteProductRepository(c.read<ApiClient>()),
         ),
       ],
       child: const MyApp(),
@@ -299,8 +293,7 @@ Docs প্রতিটা পরামর্শকে তিন ধাপে �
 - Widget এর `build()` বা `onPressed` এর ভেতরে সরাসরি `http.get` লেখা
 - ViewModel এ `BuildContext` পাঠানো বা Navigator চালানো
 - এক repository থেকে আরেক repository ডাকা (দুটো লাগলে ViewModel দুটোকেই নেবে)
-- FastAPI এর JSON সরাসরি UI তে ব্যবহার করা: API বদলালে সব screen ভেঙে যাবে
-- Business logic (matching, eligibility হিসাব) Flutter এ লেখা: ওটা backend এর কাজ
+- API এর JSON সরাসরি UI তে ব্যবহার করা: API বদলালে সব screen ভেঙে যাবে
 :::
 
 ## সূত্র
