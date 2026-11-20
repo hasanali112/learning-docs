@@ -10,6 +10,11 @@ export const sidebar: DefaultTheme.SidebarItem[] = [
     items: [{ text: 'JS · Python · Dart তুলনা', link: '/languages/js-python-dart' }],
   },
   {
+    text: 'Flutter',
+    collapsed: false,
+    items: [{ text: 'App Architecture: MVVM', link: '/flutter/app-architecture' }],
+  },
+  {
     text: 'Python',
     collapsed: false,
     items: [
