@@ -3,6 +3,7 @@ import DefaultTheme from 'vitepress/theme'
 import type { Theme } from 'vitepress'
 import Breadcrumb from './Breadcrumb.vue'
 import FlowSteps from './FlowSteps.vue'
+import LangCompare from './LangCompare.vue'
 import './custom.css'
 
 export default {
@@ -12,5 +13,7 @@ export default {
   // যেকোনো নোটে <FlowSteps> দিয়ে animated flowchart বসানো যায়
   enhanceApp({ app }) {
     app.component('FlowSteps', FlowSteps)
+    // ভাষাগুলোর পাশাপাশি তুলনা: <LangCompare />
+    app.component('LangCompare', LangCompare)
   },
 } satisfies Theme

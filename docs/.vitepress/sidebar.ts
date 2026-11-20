@@ -5,6 +5,11 @@ import type { DefaultTheme } from 'vitepress'
 // উদাহরণ: docs/fastapi/setup.md  →  link: '/fastapi/setup'
 export const sidebar: DefaultTheme.SidebarItem[] = [
   {
+    text: 'Programming Languages',
+    collapsed: false,
+    items: [{ text: 'JS · Python · Dart তুলনা', link: '/languages/js-python-dart' }],
+  },
+  {
     text: 'Python',
     collapsed: false,
     items: [
