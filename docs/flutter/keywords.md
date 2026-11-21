@@ -1,48 +1,3 @@
-<script setup>
-const frameFlow = {
-  title: 'একটা frame: setState থেকে screen পর্যন্ত',
-  nodes: [
-    { id: 'set', label: 'setState()', sub: 'মান বদলালো' },
-    { id: 'build', label: 'Build', sub: 'Widget tree' },
-    { id: 'elem', label: 'Element', sub: 'মিলিয়ে দেখে' },
-    { id: 'layout', label: 'Layout', sub: 'মাপ ঠিক করে' },
-    { id: 'paint', label: 'Paint', sub: 'screen এ আঁকে' },
-  ],
-  steps: [
-    {
-      node: 'set',
-      title: '১. তুমি setState() ডাকলে',
-      text: 'Flutter সাথে সাথে কিছু আঁকে না। শুধু এই widget কে "dirty" (আবার আঁকতে হবে) বলে চিহ্ন দিয়ে রাখে, আর পরের frame এর জন্য অপেক্ষা করে। একটা frame মানে screen এর একবার আঁকা, সেকেন্ডে ৬০ বা ১২০ বার।',
-      code: 'setState(() => _count++);\n// _CounterState → dirty',
-    },
-    {
-      node: 'build', edge: 0,
-      title: '২. Build: নতুন Widget tree',
-      text: 'পরের frame এ Flutter dirty widget এর build() আবার চালায়। নতুন Widget object গুলো তৈরি হয়। Widget শুধু নকশা (blueprint), বানানো খুব সস্তা, তাই বারবার বানালেও সমস্যা নেই।',
-      code: 'Text(\'চাপা হয়েছে 1 বার\')   // নতুন object',
-    },
-    {
-      node: 'elem', edge: 1,
-      title: '৩. Element: আগেরটার সাথে মেলায়',
-      text: 'Element tree আগের মতোই থাকে। Flutter নতুন widget কে পুরনো Element এর সাথে মেলায়: type আর key একই হলে Element রেখে দেয়, শুধু নতুন props বসায়। State এখানেই থাকে, তাই হারায় না। const widget হলে মেলানোর কাজটাই বাদ যায়।',
-      code: 'Element(Text)  ← পুরনোটাই\n  widget = নতুন Text',
-    },
-    {
-      node: 'layout', edge: 2,
-      title: '৪. Layout: মাপ আর জায়গা',
-      text: 'RenderObject tree তে parent child কে constraint পাঠায় ("সর্বোচ্চ ৩৯০ চওড়া")। child নিজের মাপ ঠিক করে উপরে জানায়। তারপর parent ঠিক করে child কোথায় বসবে। যাদের কিছু বদলায়নি, তাদের layout আবার হয় না।',
-      code: 'Constraints go down.\nSizes go up.\nParent sets position.',
-    },
-    {
-      node: 'paint', edge: 3,
-      title: '৫. Paint: pixel আঁকা',
-      text: 'শেষে RenderObject গুলো নিজেদের আঁকে, আর Flutter এর engine (Impeller) GPU দিয়ে screen এ দেখায়। Flutter Android বা iOS এর নিজস্ব button ব্যবহার করে না, প্রতিটা pixel নিজে আঁকে। এজন্যই দুই platform এ হুবহু একই দেখায়।',
-      code: 'RenderParagraph.paint()  → GPU → screen',
-    },
-  ],
-}
-</script>
-
 # Flutter শেখার keyword তালিকা
 
 Flutter শিখতে যত keyword জানতে হবে, সব এখানে এক জায়গায় রাখা: Flutter ভেতরে কীভাবে কাজ করে, Dart ভাষার keyword, তারপর Flutter এর widget, package আর tool। প্রতিটার পাশে TypeScript / React / CSS এর মিল দেওয়া আছে।
@@ -55,73 +10,37 @@ Flutter শিখতে যত keyword জানতে হবে, সব এখ�
 - **✅** মানে Safar app এ এর মধ্যেই ব্যবহার হয়েছে।
 
 ::: tip শেখার ক্রম
-১. অংশ ০ (Flutter ভেতরে কীভাবে কাজ করে) একবার পড়ে নাও → ২. Dart এর স্তর ১ → ৩. Flutter এর "Widget এর ভিত্তি" আর "Layout" → ৪. Theme আর Navigation → ৫. List, Form, Async → ৬. State management (MVVM) → ৭. Package, Tool, Test → ৮. বাকি সব স্তর ৩।
+১. [Flutter Internal Engine](/flutter/internals) একবার পড়ে নাও → ২. Dart এর স্তর ১ → ৩. Flutter এর "Widget এর ভিত্তি" আর "Layout" → ৪. Theme আর Navigation → ৫. List, Form, Async → ৬. State management (MVVM) → ৭. Package, Tool, Test → ৮. বাকি সব স্তর ৩।
 :::
 
 ## অংশ ০: Flutter ভেতরে কীভাবে কাজ করে
 
-এই অংশটা বুঝলে বাকি সব keyword কেন আছে, সেটা পরিষ্কার হয়ে যাবে।
+এই অংশটা বুঝলে বাকি সব keyword কেন আছে, সেটা পরিষ্কার হয়ে যাবে। পুরো ব্যাখ্যা flowchart সহ আছে আলাদা নোটে: **[Flutter Internal Engine](/flutter/internals)**। এখানে শুধু keyword গুলো।
 
-### তিনটা tree
-
-তুমি শুধু Widget লেখো, কিন্তু Flutter ভেতরে তিনটা আলাদা tree রাখে:
-
-```txt
-Widget tree              Element tree              RenderObject tree
-(তুমি লেখো)              (Flutter রাখে)             (Flutter রাখে)
-──────────────           ──────────────            ──────────────
-নকশা (blueprint)         জায়গা, State থাকে          মাপ আর আঁকা
-প্রতি build এ নতুন       থেকে যায়                    থেকে যায়
-খুব সস্তা                = BuildContext             ভারী কাজ
-
-Scaffold        ───→     Element         ───→      RenderBox
- └─ Text        ───→      └─ Element     ───→       └─ RenderParagraph
-```
-
-| keyword | কী | React এ | স্তর |
+| keyword | কী | React / Web এ | স্তর |
 |---|---|---|---|
-| Widget tree | তোমার লেখা নকশা। প্রতি build এ নতুন করে বানানো হয়, অপরিবর্তনীয় (immutable) | JSX থেকে তৈরি element | ১ |
+| Framework / Engine / Embedder | Flutter এর তিন স্তর: Dart এ লেখা framework, C++ engine, আর Android/iOS এর সাথে যোগাযোগের অংশ | React / browser engine / OS | ২ |
+| Widget tree | তোমার লেখা নকশা। প্রতি build এ নতুন করে বানানো হয়, immutable | JSX থেকে তৈরি element | ১ |
 | Element tree | widget এর আসল জায়গা। State আর BuildContext এখানে থাকে, build এর মাঝেও থেকে যায় | Fiber tree | ২ |
-| RenderObject tree | মাপ মাপে (layout) আর আঁকে (paint) | browser এর layout/paint | ৩ |
-| `Element` | tree তে একটা জায়গা। `BuildContext` আসলে একটা Element | Fiber node | ৩ |
-| `RenderObject` / `RenderBox` | যে object আসলে মাপ আর আঁকার কাজ করে | DOM node এর layout box | ৩ |
-| rebuild | build() আবার চলা। শুধু widget আবার বানায়, Element আর RenderObject যতটা পারে রেখে দেয় | re-render | ১ |
-| immutable | widget এর field বদলানো যায় না (সব `final`)। বদলাতে হলে নতুন widget বানাও | props read-only | ১ |
-
-### Constraints এর নিয়ম
-
-Flutter এর layout এর পুরো নিয়ম এক লাইনে:
-
-```txt
-Constraints go down. Sizes go up. Parent sets position.
-(parent সীমা বলে দেয় → child নিজের মাপ জানায় → parent জায়গা ঠিক করে)
-```
-
-| keyword | কী | CSS এ | স্তর |
-|---|---|---|---|
-| `BoxConstraints` ✅ | সর্বনিম্ন আর সর্বোচ্চ চওড়া/উঁচু | `min-width`, `max-width` | ২ |
-| tight constraint | মাপ একটাই, child এর কোনো স্বাধীনতা নেই (`SizedBox(width: 100)`) | `width: 100px` | ২ |
-| loose constraint | সর্বোচ্চ সীমা আছে, ছোট হতে পারে (`Center` child কে দেয়) | `max-width` | ২ |
-| unbounded | সীমা অসীম (Column এর ভেতরে উপর-নিচে)। এখানে `Expanded` বা `ListView` দিলে error আসে | — | ২ |
-| overflow (হলুদ-কালো দাগ) | child parent এর দেওয়া জায়গার চেয়ে বড় হয়ে গেছে | `overflow: visible` হয়ে বাইরে যাওয়া | ১ |
-
-::: warning সবচেয়ে বেশি দেখা error
-`RenderFlex overflowed` বা `Vertical viewport was given unbounded height` দেখলে প্রায় সবসময় কারণ constraints। Column এর ভেতরে ListView দিলে `Expanded` দিয়ে মুড়ে দাও, আর Row এর ভেতরে লম্বা Text থাকলে `Expanded` বা `Flexible` দাও।
-:::
-
-### একটা frame কীভাবে আঁকা হয়
-
-<FlowSteps v-bind="frameFlow" />
-
-| keyword | কী | স্তর |
-|---|---|---|
-| frame | screen একবার আঁকা। সেকেন্ডে ৬০ বা ১২০ বার হয় | ২ |
-| jank | একটা frame আঁকতে বেশি সময় লাগায় screen আটকে যাওয়া | ২ |
-| Impeller / Skia | Flutter এর আঁকার engine, GPU দিয়ে pixel আঁকে | ৩ |
-| Dart VM, JIT, AOT | debug এ JIT (Hot Reload চলে), release এ AOT (machine code, দ্রুত) | ৩ |
-| Hot Reload কেন কাজ করে | নতুন code দিয়ে build() আবার চলে, কিন্তু Element আর State থেকে যায় | ১ |
-| `WidgetsFlutterBinding.ensureInitialized()` | `runApp` এর আগে plugin বা async কাজ করতে হলে প্রথমে ডাকতে হয় | ২ |
-| `addPostFrameCallback` | এই frame আঁকা শেষ হলে কিছু করো (যেমন scroll বা dialog) | ৩ |
+| RenderObject tree | মাপ মাপে (layout) আর আঁকে (paint) | DOM এর layout box | ৩ |
+| `Widget.canUpdate` | type আর key একই হলে পুরনো Element রেখে দেয় | reconciliation | ২ |
+| rebuild | build() আবার চলা। Element আর RenderObject যতটা পারে রেখে দেয় | re-render | ১ |
+| dirty / `markNeedsBuild` | "পরের frame এ আবার build লাগবে" চিহ্ন। setState এটাই করে | — | ২ |
+| `BoxConstraints` ✅ | সর্বনিম্ন আর সর্বোচ্চ চওড়া/উঁচু, parent child কে দেয় | `min-width`, `max-width` | ২ |
+| tight / loose / unbounded | মাপ একটাই / সর্বোচ্চ সীমা আছে / কোনো সীমা নেই | — | ২ |
+| overflow (হলুদ-কালো দাগ) | child parent এর দেওয়া জায়গার চেয়ে বড় | `overflow: visible` | ১ |
+| frame, vsync | screen একবার আঁকা (সেকেন্ডে ৬০/১২০), আর আঁকার সংকেত | `requestAnimationFrame` | ২ |
+| build → layout → paint → raster | একটা frame এর ধাপ | browser এর render pipeline | ২ |
+| jank | frame ১৬ms এর বেশি নিলে screen আটকে যাওয়া | dropped frame | ২ |
+| Layer, `RepaintBoundary` | আলাদা করে আঁকা অংশ | compositing layer | ৩ |
+| UI thread / Raster thread | Dart code চলে / GPU তে আঁকা হয় | main thread / compositor thread | ২ |
+| Hit test, Gesture arena | চাপ কার উপর পড়লো / tap না scroll, কে জিতবে | event target, bubbling | ৩ |
+| `InheritedWidget` | নিচের সবাইকে data দেয়, `of(context)` এর ভিত্তি | Context | ২ |
+| Impeller / Skia | Flutter এর আঁকার engine | Blink / Skia | ৩ |
+| JIT / AOT | debug এ চলতে চলতে compile (Hot Reload চলে) / release এ আগে থেকে machine code | dev server / production build | ২ |
+| `WidgetsFlutterBinding.ensureInitialized()` | runApp এর আগে plugin বা async কাজ করতে হলে প্রথমে ডাকতে হয় | — | ২ |
+| `addPostFrameCallback` | এই frame আঁকা শেষ হলে কিছু করো | `requestAnimationFrame` callback | ৩ |
+| platform channel | Dart থেকে Kotlin/Swift code ডাকা | native bridge | ৩ |
 
 ## অংশ ১: Dart ভাষার keyword
 
