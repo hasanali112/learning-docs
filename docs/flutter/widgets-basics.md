@@ -246,7 +246,78 @@ export function Counter() {
 
 **দুইটা class কেন?** Docs এর ব্যাখ্যা: widget object গুলো ক্ষণস্থায়ী, প্রতিবার build এ নতুন করে বানানো হয়। কিন্তু `State` object থেকে যায় build এর মাঝেও। তাই বদলানো মান (`_count`) রাখা হয় `State` এ, যাতে হারিয়ে না যায়। React এ এই কাজটা `useState` আড়ালে করে দেয়।
 
-`_` দিয়ে শুরু নাম (`_CounterState`, `_count`) মানে **private**, এই ফাইলের বাইরে থেকে দেখা যায় না।
+### নামটা কেন `_CounterState`
+
+নামটা তিন টুকরো দিয়ে তৈরি:
+
+```txt
+_    Counter    State
+│       │         │
+│       │         └─ এটা একটা State class
+│       └─ কোন widget এর State
+└─ private: শুধু এই ফাইলের ভেতরে ব্যবহার করা যায়
+```
+
+- **`_`:** বাইরের কেউ (যেমন অন্য screen) শুধু `Counter()` বানায়। State class টা Flutter ভেতরে নিজে ব্যবহার করে, বাইরের কারো এটা ছোঁয়ার দরকার নেই। তাই লুকিয়ে রাখা হয়।
+- **`Counter` + `State`:** এটা Dart এর নিয়ম না, Flutter এর প্রচলিত রীতি (convention)। নাম `_Xyz` দিলেও code চলবে। কিন্তু সবাই `_<Widget এর নাম>State` লেখে, যাতে নাম দেখেই বোঝা যায় এটা কার state। VS Code এ `stful` লিখলে এই নাম আপনা থেকে বসে যায়।
+- **`extends State<Counter>`:** `<Counter>` বলে দেয় এই State কোন widget এর। এজন্য State এর ভেতর থেকে `widget.xyz` লিখে widget এর props পড়া যায়।
+- **`createState()`:** Flutter এটা ডেকে State object চায়। তুমি নিজে কখনো এটা ডাকো না।
+
+### Dart এ private: class এর না, ফাইলের
+
+Dart এ যেকোনো জিনিসের নামের শুরুতে `_` দিলেই সেটা private হয়, শুধু method না:
+
+```dart
+// counter.dart
+
+class _CounterState { }          // private class
+int _total = 0;                  // private variable (top-level)
+void _helper() { }               // private function (top-level)
+
+class Counter {
+  final int _secret = 1;         // private field
+  void _doWork() { }             // private method
+}
+```
+
+এই ৫টার কোনোটাই অন্য ফাইল থেকে ব্যবহার করা যায় না।
+
+TypeScript বা Java এর `private` এর সাথে পার্থক্য:
+
+| | TypeScript / Java | Dart |
+|---|---|---|
+| কীভাবে লেখে | `private` keyword | নামের শুরুতে `_` |
+| কোথায় বসে | শুধু class এর ভেতরের method/field এ | যেকোনো কিছুতে: class, function, variable, method |
+| কার থেকে লুকায় | **class** এর বাইরে থেকে | **ফাইলের** বাইরে থেকে |
+| পুরো class লুকাতে | TS: `export` না দেওয়া | `_` দেওয়া |
+
+TypeScript এ class লুকাতে `export` বাদ দাও:
+
+```ts
+export class Counter { }      // অন্য ফাইল import করতে পারে
+class CounterState { }        // export নেই = এই ফাইলের private
+```
+
+Dart এ `export` keyword নেই। সবকিছু আপনা থেকে public, আর `_` দিলে private। তাই class লুকাতেও সেই একই `_` লাগে।
+
+::: tip মনে রাখার নিয়ম
+Dart এ private মানে **"এই ফাইলের বাইরে দেখা যাবে না"**, "এই class এর বাইরে" না।
+:::
+
+এর একটা ফল: একই ফাইলের দুটো class একে অপরের private জিনিস ব্যবহার করতে পারে।
+
+```dart
+// একই ফাইল
+class A {
+  int _x = 5;
+}
+
+class B {
+  void show(A a) => print(a._x);   // ✅ চলে, কারণ একই ফাইল
+}
+```
+
+TypeScript বা Java তে এটা error দিত, কারণ ওখানে `_x` শুধু class A এর ভেতরে ব্যবহার করা যায়। `Counter` আর `_CounterState` এজন্যই একই ফাইলে থাকে: দুজন একে অপরকে দেখতে পায়, কিন্তু বাইরের ফাইলগুলো শুধু `Counter` কে দেখে।
 
 <FlowSteps v-bind="rebuildFlow" />
 
