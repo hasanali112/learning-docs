@@ -13,6 +13,7 @@ export const sidebar: DefaultTheme.SidebarItem[] = [
     text: 'Flutter',
     collapsed: false,
     items: [
+      { text: 'শেখার keyword তালিকা', link: '/flutter/keywords' },
       { text: 'Widget আর StatelessWidget', link: '/flutter/widgets-basics' },
       { text: 'Constructor আর build(): TS তুলনা', link: '/flutter/constructor-and-build' },
       { text: 'App Architecture: MVVM', link: '/flutter/app-architecture' },
