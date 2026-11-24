@@ -8,11 +8,9 @@ export const sidebar: DefaultTheme.SidebarItem[] = [
     text: 'Foundation',
     collapsed: false,
     items: [
-      {
-        text: 'C',
-        collapsed: false,
-        items: [{ text: 'Array: int arr[n] আর memory', link: '/foundation/c/vla-memory' }],
-      },
+      { text: 'Data Type', link: '/foundation/data-types' },
+      { text: 'Input আর Output: %d আর &', link: '/foundation/input-output' },
+      { text: 'Array', link: '/foundation/array' },
     ],
   },
   {
