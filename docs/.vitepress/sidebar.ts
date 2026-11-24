@@ -5,6 +5,17 @@ import type { DefaultTheme } from 'vitepress'
 // উদাহরণ: docs/fastapi/setup.md  →  link: '/fastapi/setup'
 export const sidebar: DefaultTheme.SidebarItem[] = [
   {
+    text: 'Foundation',
+    collapsed: false,
+    items: [
+      {
+        text: 'C',
+        collapsed: false,
+        items: [{ text: 'Array: int arr[n] আর memory', link: '/foundation/c/vla-memory' }],
+      },
+    ],
+  },
+  {
     text: 'Programming Languages',
     collapsed: false,
     items: [{ text: 'JS · Python · Dart তুলনা', link: '/languages/js-python-dart' }],
